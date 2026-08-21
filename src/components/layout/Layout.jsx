@@ -127,9 +127,25 @@ export const Layout = () => {
     );
   };
   
+  const isBypassedRoute = false;
+
+  if (isBypassedRoute) {
+    return (
+      <div className="min-h-screen bg-[#F7F6F3] flex min-w-0">
+        <main className="flex-1 min-h-screen overflow-x-hidden p-0 relative transition-all">
+          <div className={`${showLockScreen ? "filter blur-[3px] pointer-events-none select-none" : ""}`}>
+            <Outlet />
+          </div>
+          {showLockScreen && renderLockScreen()}
+        </main>
+        <ToastContainer toasts={toasts} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F7F6F3] flex min-w-0">
-      <Sidebar />
+      {role !== ROLES.FRONT_OFFICE && <Sidebar />}
       <div className="flex-1 min-h-screen flex flex-col min-w-0 relative">
         <Navbar />
         <main className={mainClassName}>

@@ -4,7 +4,7 @@ import {
   Search, Bell, ChevronDown, LogOut, Settings as SettingsIcon, User, Hotel, 
   LayoutDashboard, MessageSquare, CheckSquare, TrendingUp, Cpu, Library, 
   Activity, Users, Sparkles, Wrench, Server, Menu, ArrowLeft, MoreHorizontal,
-  Building2, CreditCard, UserCheck
+  Building2, CreditCard, UserCheck, Clock
 } from 'lucide-react';
 import { useApp, ROLES } from '../../context/AppContext';
 import { useClickOutside } from '../../hooks/useClickOutside';
@@ -127,15 +127,18 @@ export const Navbar = () => {
     { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
     { name: 'Conversations', icon: MessageSquare, path: '/app/conversations' },
     { name: 'Tasks', icon: UserCheck, path: '/app/takeover-queue' },
-    { name: 'Settings', icon: SettingsIcon, path: '/app/settings' },
   ];
 
   const housekeepingNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/app/housekeeping', exact: true },
+    { name: 'Rooms', icon: Building2, path: '/app/housekeeping?tab=rooms' },
+    { name: 'Tasks', icon: Clock, path: '/app/housekeeping?tab=tasks' },
   ];
 
   const maintenanceNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/app/maintenance', exact: true },
+    { name: 'Issues', icon: Wrench, path: '/app/maintenance?tab=issues' },
+    { name: 'Tasks', icon: Clock, path: '/app/maintenance?tab=tasks' },
   ];
 
   const superAdminNavItems = [
@@ -147,10 +150,27 @@ export const Navbar = () => {
   ];
 
   let currentNavItems = managerNavItems;
-  if (isSuperAdmin) currentNavItems = superAdminNavItems;
-  else if (isFrontOffice) currentNavItems = frontOfficeNavItems;
-  else if (isHousekeeping) currentNavItems = housekeepingNavItems;
-  else if (isMaintenance) currentNavItems = maintenanceNavItems;
+  if (location.pathname.startsWith('/app/maintenance')) {
+    currentNavItems = maintenanceNavItems;
+  } else if (location.pathname.startsWith('/app/housekeeping')) {
+    currentNavItems = housekeepingNavItems;
+  } else if (isSuperAdmin) {
+    currentNavItems = superAdminNavItems;
+  } else if (isFrontOffice) {
+    currentNavItems = frontOfficeNavItems;
+  } else if (isHousekeeping) {
+    currentNavItems = [
+      { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
+      { name: 'Rooms', icon: Building2, path: '/app?tab=rooms' },
+      { name: 'Tasks', icon: Clock, path: '/app?tab=tasks' },
+    ];
+  } else if (isMaintenance) {
+    currentNavItems = [
+      { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
+      { name: 'Issues', icon: Wrench, path: '/app?tab=issues' },
+      { name: 'Tasks', icon: Clock, path: '/app?tab=tasks' },
+    ];
+  }
 
   const isDeptActive = activeDeptOptions.some(opt => location.pathname.startsWith(opt.path));
 
@@ -405,9 +425,11 @@ export const Navbar = () => {
             }
 
             const Icon = item.icon;
-            const isActive = item.exact 
-              ? location.pathname === item.path 
-              : location.pathname.startsWith(item.path);
+            const isActive = (item.path && item.path.includes('?tab='))
+              ? (location.pathname + location.search) === item.path
+              : (item.exact 
+                  ? (location.pathname === item.path && !location.search.includes('tab=')) 
+                  : (item.path && location.pathname.startsWith(item.path)));
             return (
               <NavLink
                 key={item.name}

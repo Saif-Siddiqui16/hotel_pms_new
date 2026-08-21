@@ -25,10 +25,19 @@ import {
   MicOff,
   PhoneOff,
   Volume2,
-  UserPlus
+  UserPlus,
+  LayoutDashboard,
+  Bell,
+  LogOut,
+  Globe,
+  Building2,
+  Sparkles,
+  CheckCircle,
+  Sliders
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../config';
+import { useApp, ROLES } from '../context/AppContext';
 
 const initialConversations = [
   {
@@ -54,8 +63,818 @@ const initialConversations = [
   }
 ];
 
+const frontOfficeConversationsList = [
+  {
+    id: 'clara-bertrand',
+    name: 'Clara Bertrand',
+    lastMsg: 'Either we change room or I would expect the second night to be reduced. Can I speak wit...',
+    time: '09:52',
+    tag: 'Escalated 302',
+    tagColor: 'bg-rose-50 text-rose-700 border-rose-100',
+    unreadCount: 2,
+    room: '302',
+    status: 'In House',
+    stay: '16 Aug → 19 Aug',
+    nights: '3 • 2A 0C',
+    category: 'Deluxe King',
+    rate: '€189 / night',
+    bookingNo: 'MRC-48219',
+    lang: 'France • speaks French • 2 previous stays',
+    tags: ['Quiet room', 'Late riser'],
+    messages: [
+      { sender: 'guest', text: 'Either we change room or I would expect the second night to be reduced. Can I speak with a manager?', time: '08:31', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'Madame Bertrand, I am very sorry the room is still warm. Our technician is working on the unit now. I can move you to room 310, a Junior Suite on the fourth floor, which is ready now. We will also apply a 20% discount to your second night to make up for the discomfort. Would you like to proceed with the room move?',
+    aiSummary: "Third message about the air conditioning in 302 not cooling. Guest is highly frustrated, mentions she slept poorly. Housekeeping confirmed it's blowing room-temp air. Maintenance technician Milan Novák is assigned but waiting on parts."
+  },
+  {
+    id: 'sofia-marchetti',
+    name: 'Sofia Marchetti',
+    lastMsg: 'AI: Breakfast is served 07:00–10:30 on weekdays and until 11:00 at weekends, in the...',
+    time: '09:47',
+    tag: 'AI handling',
+    tagColor: 'bg-blue-50 text-blue-700 border-blue-100',
+    unreadCount: 0,
+    room: 'Deluxe Suite',
+    status: 'Confirmed',
+    stay: '24 Aug → 28 Aug',
+    nights: '4 • 2A 0C',
+    category: 'Deluxe Suite',
+    rate: '€245 / night',
+    bookingNo: 'MRC-48332',
+    lang: 'Italy • speaks English & Italian',
+    tags: ['High floor', 'Anniversary'],
+    messages: [
+      { sender: 'guest', text: 'What time is breakfast served?', time: '09:46', channel: 'WhatsApp' },
+      { sender: 'ai', text: 'AI: Breakfast is served 07:00–10:30 on weekdays and until 11:05 at weekends, in the main restaurant.', time: '09:47', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'Breakfast is served in the Restaurant Mercier located on the ground floor. Let me know if you would like me to book a table for dinner.',
+    aiSummary: "Guest asked about breakfast hours. AI answered correctly. No further action needed."
+  },
+  {
+    id: 'hendrik-vos',
+    name: 'Hendrik Vos',
+    lastMsg: 'Let\'s see if 15:00 works first, thank you.',
+    time: '09:21',
+    tag: 'AI handling 205',
+    tagColor: 'bg-blue-50 text-blue-700 border-blue-105',
+    unreadCount: 1,
+    room: '205',
+    status: 'In House',
+    stay: '19 Aug → 21 Aug',
+    nights: '2 • 1A 0C',
+    category: 'Standard Queen',
+    rate: '€135 / night',
+    bookingNo: 'MRC-48110',
+    lang: 'Netherlands • speaks Dutch & English',
+    tags: ['Late checkout requested'],
+    messages: [
+      { sender: 'guest', text: 'Let\'s see if 15:00 works first, thank you.', time: '09:21', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'I have checked our availability and we can confirm a late checkout at 15:00 for a fee of €30. Would you like me to process this?',
+    aiSummary: "Guest wants to confirm 15:00 checkout. Housekeeping says okay. Wait for guest response."
+  },
+  {
+    id: 'nadia-haddad',
+    name: 'Nadia Haddad',
+    lastMsg: 'AI: Dear Madame Haddad, thank you for your message. Billing questions are reviewed by...',
+    time: '08:05',
+    tag: 'Escalated 411',
+    tagColor: 'bg-rose-50 text-rose-700 border-rose-100',
+    unreadCount: 1,
+    room: '411',
+    status: 'Departed',
+    stay: '17 Aug → 21 Aug',
+    nights: '4 • 2A 0C',
+    category: 'Superior King',
+    rate: '€165 / night',
+    bookingNo: 'MRC-48092',
+    lang: 'Belgium • speaks French & English',
+    tags: ['Escalated billing issue'],
+    messages: [
+      { sender: 'guest', text: 'Why was I charged €47.60 extra on my bill? I think this is duplicate city tax and minibar charges.', time: '08:04', channel: 'Email' },
+      { sender: 'ai', text: 'AI: Dear Madame Haddad, thank you for your message. Billing questions are reviewed by our finance team, and we will get back to you shortly.', time: '08:05', channel: 'Email' }
+    ],
+    aiDraft: 'Dear Madame Haddad, I have reviewed your invoice and found a duplicate minibar charge of €36.80 and city tax mismatch of €10.85. I have processed a refund of €47.65 to your card. We apologize for the error.',
+    aiSummary: "Guest disputed extra charge of €47.60. AI sent acknowledgment. Shift leader needs to approve refund."
+  },
+  {
+    id: 'grace-okonkwo',
+    name: 'Grace Okonkwo',
+    lastMsg: 'AI: Good morning Grace, Check-in is from 15:00, but I have marked your arrival as 13:00...',
+    time: '07:44',
+    tag: 'AI handling 401',
+    tagColor: 'bg-blue-50 text-blue-700 border-blue-100',
+    unreadCount: 0,
+    room: '401',
+    status: 'Expected Today',
+    stay: '21 Aug → 25 Aug',
+    nights: '4 • 1A 0C',
+    category: 'Superior King',
+    rate: '€175 / night',
+    bookingNo: 'MRC-48350',
+    lang: 'United Kingdom • speaks English',
+    tags: ['Early arrival requested'],
+    messages: [
+      { sender: 'guest', text: 'Can I check in early at 13:00 today?', time: '07:43', channel: 'WhatsApp' },
+      { sender: 'ai', text: 'AI: Good morning Grace, Check-in is from 15:00, but I have marked your arrival as 13:00 and we will try our best to have it ready.', time: '07:44', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'Great news! Your room 401 has been inspected and is ready for early check-in now. You can check in at the reception.',
+    aiSummary: "Guest requested 13:00 early check-in. Room 401 has been inspected by housekeeping and is ready."
+  },
+  {
+    id: 'daniel-weiss',
+    name: 'Daniel Weiss',
+    lastMsg: 'AI: Ihre Handtücher wurden gebracht. Melden Sie sich gern, wenn Sie noch etwas...',
+    time: '09:03',
+    tag: 'Resolved 212',
+    tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    unreadCount: 0,
+    room: '212',
+    status: 'In House',
+    stay: '20 Aug → 22 Aug',
+    nights: '2 • 2A 0C',
+    category: 'Standard Queen',
+    rate: '€140 / night',
+    bookingNo: 'MRC-48299',
+    lang: 'Germany • speaks German & English',
+    tags: ['Towel request resolved'],
+    messages: [
+      { sender: 'guest', text: 'Can we get extra towels in room 212?', time: '09:01', channel: 'WhatsApp' },
+      { sender: 'ai', text: 'AI: Ihre Handtücher wurden gebracht. Melden Sie sich gern, wenn Sie noch etwas benötigen.', time: '09:03', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'The towels have been delivered. Let us know if you need anything else.',
+    aiSummary: "Guest requested extra towels. Housekeeping delivered them. Marked as resolved."
+  },
+  {
+    id: 'yuki-tanabe',
+    name: 'Yuki Tanabe',
+    lastMsg: 'Amélie Duprez: Taking this one — I\'ll call De Kleine Zavel when they open at 11:00 and...',
+    time: '08:26',
+    tag: 'Human takeover 307',
+    tagColor: 'bg-teal-50 text-teal-700 border-teal-100',
+    unreadCount: 0,
+    room: '307',
+    status: 'Expected Today',
+    stay: '21 Aug → 24 Aug',
+    nights: '3 • 2A 0C',
+    category: 'Deluxe King',
+    rate: '€195 / night',
+    bookingNo: 'MRC-48354',
+    lang: 'Japan • speaks Japanese & English',
+    tags: ['VIP Guest', 'Anniversary package'],
+    messages: [
+      { sender: 'guest', text: 'Could you recommend a good local restaurant for dinner tonight? Maybe De Kleine Zavel?', time: '08:22', channel: 'WhatsApp' },
+      { sender: 'ai', text: 'Amélie Duprez: Taking this one — I\'ll call De Kleine Zavel when they open at 11:00 and book a table for you.', time: '08:26', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'Dear Yuki, I have booked a table for you at De Kleine Zavel for tonight at 20:00. The reservation is under Tanabe. Have a wonderful dinner!',
+    aiSummary: "Guest asked for restaurant recommendation. Amélie took over to book De Kleine Zavel."
+  },
+  {
+    id: 'priya-raghavan',
+    name: 'Priya Raghavan',
+    lastMsg: 'AI: Hello Priya. Yes — a cot is free of charge for children under two and I have asked...',
+    time: '08:11',
+    tag: 'AI handling 208',
+    tagColor: 'bg-blue-50 text-blue-700 border-blue-100',
+    unreadCount: 0,
+    room: '208',
+    status: 'Expected Today',
+    stay: '21 Aug → 28 Aug',
+    nights: '7 • 2A 1C',
+    category: 'Standard Queen',
+    rate: '€140 / night',
+    bookingNo: 'MRC-48348',
+    lang: 'India • speaks English & Tamil',
+    tags: ['Baby cot request'],
+    messages: [
+      { sender: 'guest', text: 'Do you charge extra for a baby cot?', time: '08:10', channel: 'WhatsApp' },
+      { sender: 'ai', text: 'AI: Hello Priya. Yes — a cot is free of charge for children under two and I have asked housekeeping to place it in room 208.', time: '08:11', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'A baby cot is free of charge. I have confirmed it is placed in your room 208 for your arrival.',
+    aiSummary: "Guest asked about baby cot charges. AI confirmed free cot and notified housekeeping."
+  },
+  {
+    id: 'lars-bakke',
+    name: 'Lars Bakke',
+    lastMsg: 'AI: Hello Lars, Good news — our housekeeping log has a black 65W charger...',
+    time: 'yesterday 18:32',
+    tag: 'AI handling 115',
+    tagColor: 'bg-blue-50 text-blue-700 border-blue-100',
+    unreadCount: 0,
+    room: '115',
+    status: 'Departed',
+    stay: '18 Aug → 20 Aug',
+    nights: '2 • 1A 0C',
+    category: 'Standard Single',
+    rate: '€95 / night',
+    bookingNo: 'MRC-48190',
+    lang: 'Norway • speaks Norwegian & English',
+    tags: ['Lost item found'],
+    messages: [
+      { sender: 'guest', text: 'I think I left my laptop charger in room 115 yesterday. Did anyone find it?', time: 'yesterday 18:30', channel: 'Email' },
+      { sender: 'ai', text: 'AI: Hello Lars, Good news — our housekeeping log has a black 65W charger found in room 115. We can ship it to your home address if you like.', time: 'yesterday 18:32', channel: 'Email' }
+    ],
+    aiDraft: 'We have your charger safely stored. Please send us your address so we can calculate shipping costs.',
+    aiSummary: "Guest lost laptop charger. Housekeeping confirmed it was found. Wait for guest shipping address."
+  },
+  {
+    id: 'elena-novak',
+    name: 'Elena Novak',
+    lastMsg: 'AI: Lovely — it will be in the room by 18:00 and €65 is added to your folio. Enjoy your evening.',
+    time: '07:58',
+    tag: 'Resolved 318',
+    tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    unreadCount: 0,
+    room: '318',
+    status: 'In House',
+    stay: '20 Aug → 23 Aug',
+    nights: '3 • 2A 0C',
+    category: 'Superior King',
+    rate: '€170 / night',
+    bookingNo: 'MRC-48301',
+    lang: 'Croatia • speaks Croatian & English',
+    tags: ['Minibar purchase resolved'],
+    messages: [
+      { sender: 'guest', text: 'Can you send up a bottle of champagne to room 318 tonight?', time: '07:56', channel: 'WhatsApp' },
+      { sender: 'ai', text: 'AI: Lovely — it will be in the room by 18:00 and €65 is added to your folio. Enjoy your evening.', time: '07:58', channel: 'WhatsApp' }
+    ],
+    aiDraft: 'Champagne has been charged and delivered. Let us know if you need anything else.',
+    aiSummary: "Guest requested champagne. AI processed charge to folio and notified room service. Delivered."
+  }
+];
+
+const FrontOfficeConversationsView = () => {
+  const navigate = useNavigate();
+  const { setIsAuthenticated } = useApp();
+  const logoutUser = () => {
+    setIsAuthenticated(false);
+    navigate('/login');
+  };
+  const [conversations, setConversations] = useState(frontOfficeConversationsList);
+  const [selectedId, setSelectedId] = useState('clara-bertrand');
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'ai', 'human'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [activeChatTab, setActiveChatTab] = useState('reply'); // 'reply', 'note'
+
+  // Get active selected conversation
+  const selectedConv = conversations.find(c => c.id === selectedId) || conversations[0];
+
+  const chatSubject = 
+    selectedConv.id === 'clara-bertrand' ? 'Air conditioning in 302 not cooli...' :
+    selectedConv.id === 'hendrik-vos' ? 'Late checkout 15:00 — decision needed' :
+    selectedConv.id === 'nadia-haddad' ? 'Approve €47.60 credit note' :
+    selectedConv.id === 'grace-okonkwo' ? 'Early check-in at 13:00 today request' :
+    selectedConv.id === 'sofia-marchetti' ? 'Breakfast hours & options enquiry' :
+    selectedConv.id === 'daniel-weiss' ? 'Extra towels requested for room 212' :
+    selectedConv.id === 'yuki-tanabe' ? 'Local restaurant recommendations query' :
+    selectedConv.id === 'priya-raghavan' ? 'Cot request details for room 208' :
+    selectedConv.id === 'lars-bakke' ? 'Lost laptop charger in room 115' :
+    selectedConv.id === 'elena-novak' ? 'Bottle of champagne folio request' :
+    'Guest Conversation';
+
+  // Initialize reply text with the AI Draft when selected conversation changes
+  useEffect(() => {
+    if (selectedConv) {
+      setReplyText(selectedConv.aiDraft || '');
+    }
+  }, [selectedId]);
+
+  // Filter conversations list based on search and tabs
+  const filteredConversations = conversations.filter(c => {
+    // Search filter
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          c.lastMsg.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          c.room.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Tab filter
+    if (activeTab === 'ai') {
+      return matchesSearch && (c.tag.includes('AI') || c.tag.includes('Resolved'));
+    }
+    if (activeTab === 'human') {
+      return matchesSearch && (c.tag.includes('Human') || c.tag.includes('Escalated'));
+    }
+    return matchesSearch;
+  });
+
+  const handleSendReply = () => {
+    if (!replyText.trim()) return;
+    
+    // Add reply message to selected conversation's messages
+    const updated = conversations.map(c => {
+      if (c.id === selectedId) {
+        return {
+          ...c,
+          unreadCount: 0,
+          lastMsg: `You: ${replyText}`,
+          messages: [
+            ...c.messages,
+            { sender: 'user', text: replyText, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), channel: 'WhatsApp' }
+          ],
+          aiDraft: '' // Clear draft since we replied
+        };
+      }
+      return c;
+    });
+    
+    setConversations(updated);
+    setReplyText('');
+  };
+
+  const handleResetDraft = () => {
+    if (selectedConv) {
+      setReplyText(selectedConv.aiDraft || '');
+    }
+  };
+
+  return (
+    <div className="h-screen bg-[#F7F6F3] flex min-w-0 font-sans text-left relative overflow-hidden">
+      <style>{`
+        #front-office-conversations-content,
+        #front-office-conversations-content button,
+        #front-office-conversations-content input,
+        #front-office-conversations-content select,
+        #front-office-conversations-content textarea,
+        #front-office-conversations-content span,
+        #front-office-conversations-content p,
+        #front-office-conversations-content h1,
+        #front-office-conversations-content h2,
+        #front-office-conversations-content h3,
+        #front-office-conversations-content h4,
+        #front-office-conversations-content label,
+        #front-office-conversations-content td,
+        #front-office-conversations-content th {
+          font-family: Georgia, Cambria, "Times New Roman", Times, serif !important;
+        }
+      `}</style>
+      
+      {/* 1. Left Sidebar */}
+      <div className="w-64 border-r border-[#E7E4DD] bg-white flex flex-col justify-between shrink-0 p-5 h-screen sticky top-0 font-sans">
+        <div className="space-y-6">
+          {/* Logo Brand */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#105F39] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm">
+              <Building2 size={20} />
+            </div>
+            <div className="text-left">
+              <h1 className="font-extrabold text-sm tracking-tight text-[#0F5132]">Hotelogx</h1>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider -mt-0.5">CONNECT</p>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="space-y-1">
+            <button
+              onClick={() => navigate('/app')}
+              className="w-full flex items-center gap-3.5 px-4 py-3 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              <LayoutDashboard size={17} className="text-slate-400" />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              className="w-full flex items-center justify-between px-4 py-3 bg-[#EBF6EE] text-[#0F5132] rounded-xl text-xs font-black transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5">
+                <MessageSquare size={17} className="text-[#0F5132]" />
+                <span>Conversations</span>
+              </div>
+              <span className="bg-[#0F5132] text-white text-[10px] font-black rounded-full px-2 py-0.5 font-mono">
+                2
+              </span>
+            </button>
+
+            <button
+              onClick={() => navigate('/app/takeover-queue')}
+              className="w-full flex items-center justify-between px-4 py-3 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5">
+                <Clock size={17} className="text-slate-400" />
+                <span>Tasks</span>
+              </div>
+              <span className="bg-slate-200 text-slate-600 text-[10px] font-black rounded-full px-2 py-0.5 font-mono">
+                10
+              </span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Whatsapp ops layer widget in sidebar bottom */}
+        <div className="space-y-2.5 select-none text-left">
+          <button 
+            onClick={() => navigate('/app/takeover-queue')}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs font-sans"
+          >
+            <MessageSquare size={15} className="text-slate-450" />
+            <span>WhatsApp ops layer</span>
+          </button>
+          
+          <div className="flex items-start gap-2 px-2">
+            <Sparkles size={13} className="text-slate-400 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-slate-500 leading-relaxed font-medium font-sans">
+              The AI is watching every channel. You only see what needs you.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Main content page frame */}
+      <div id="front-office-conversations-content" className="flex-1 flex flex-col h-screen min-w-0 bg-[#F7F6F3]">
+        
+        {/* Top Header */}
+        <header className="flex justify-between items-center px-8 py-5 border-b border-[#E7E4DD] bg-white">
+          <div className="text-left space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-slate-800 font-sans">Hotel Mercier</span>
+              <span className="text-slate-350 text-xs">•</span>
+              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Antwerp - 48 rooms</span>
+            </div>
+            <h1 className="text-base font-bold text-slate-900 font-sans">Guest conversations — the AI drafts, you decide</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="px-3.5 py-1 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-full font-mono">
+              Front Office
+            </span>
+
+            {/* Notification alert */}
+            <button className="w-9 h-9 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl flex items-center justify-center text-slate-700 relative transition-all cursor-pointer shadow-xs">
+              <Bell size={16} />
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 border-2 border-white rounded-full flex items-center justify-center text-[9px] font-black text-white font-mono">
+                2
+              </span>
+            </button>
+
+            {/* User Profile & Logout */}
+            <div className="flex items-center gap-3 select-none font-sans">
+              <div className="w-8 h-8 bg-[#EBF6EE] text-[#105F39] border border-[#d1e7dd]/60 rounded-xl flex items-center justify-center font-bold text-xs tracking-wider font-mono">
+                AD
+              </div>
+              <span className="text-xs font-bold text-slate-800 font-sans">Amélie</span>
+              <button 
+                onClick={logoutUser}
+                title="Sign Out"
+                className="text-slate-400 hover:text-rose-650 transition-colors cursor-pointer p-1"
+              >
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* 3 columns body */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-0 min-h-0 bg-white">
+          
+          {/* Column 1: Conversations List (1/4 width) */}
+          <div className="border-r border-[#E7E4DD] flex flex-col h-full min-h-0">
+            {/* Search */}
+            <div className="relative px-4 py-3 border-b border-[#E7E4DD]">
+              <Search className="absolute left-7.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <input
+                type="text"
+                placeholder="Search guests..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 focus:border-[#105F39] focus:bg-white focus:ring-2 focus:ring-[#105F39]/10 rounded-xl outline-none transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Horizontal Tabs with Arrows */}
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#E7E4DD] bg-slate-50/40 select-none shrink-0 relative font-sans">
+              <button className="text-slate-400 hover:text-slate-650 px-1 text-sm font-bold cursor-pointer">‹</button>
+              <div className="flex-1 flex gap-1.5 overflow-x-auto scrollbar-none justify-center px-1">
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                    activeTab === 'all' ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
+                  }`}
+                >
+                  <span>Unresolved</span>
+                  <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === 'all' ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>8</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('ai')}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                    activeTab === 'ai' ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
+                  }`}
+                >
+                  <span>WhatsApp</span>
+                  <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === 'ai' ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>7</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('human')}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                    activeTab === 'human' ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
+                  }`}
+                >
+                  <span>Email</span>
+                  <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === 'human' ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>4</span>
+                </button>
+              </div>
+              <button className="text-slate-400 hover:text-slate-650 px-1 text-sm font-bold cursor-pointer">›</button>
+            </div>
+
+            {/* Scrollable list */}
+            <div className="flex-1 overflow-y-auto divide-y divide-[#E7E4DD]">
+              {filteredConversations.map(c => {
+                const isSelected = c.id === selectedId;
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => setSelectedId(c.id)}
+                    className={`p-4 text-left transition-all cursor-pointer hover:bg-slate-50/50 flex flex-col gap-2 relative ${
+                      isSelected ? 'bg-[#EBF6EE]/40 border-l-4 border-[#105F39]' : ''
+                    }`}
+                  >
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-xs font-bold text-slate-900">{c.name}</span>
+                      <span className="text-[10px] text-slate-400 font-bold font-mono">{c.time}</span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed font-medium">
+                      {c.lastMsg}
+                    </p>
+
+                    <div className="flex justify-between items-center">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${c.tagColor}`}>
+                        {c.tag}
+                      </span>
+                      {c.unreadCount > 0 && (
+                        <span className="w-4 h-4 bg-emerald-600 rounded-full flex items-center justify-center text-[9px] font-black text-white font-mono shadow-sm">
+                          {c.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredConversations.length === 0 && (
+                <div className="p-8 text-center text-slate-400 text-xs font-medium">
+                  No conversations match your filter.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Column 2: Chat Pane (2/4 width) */}
+          <div className="lg:col-span-2 flex flex-col h-full min-h-0 border-r border-[#E7E4DD]">
+            
+            {/* Active chat header */}
+            <div className="px-6 py-4 border-b border-[#E7E4DD] bg-white flex justify-between items-center shrink-0">
+              <div className="text-left space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-900">{chatSubject}</span>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${selectedConv.tagColor}`}>
+                    {selectedConv.tag.split(' ')[0]}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                  <span>💬 WhatsApp</span>
+                  <span>•</span>
+                  <span>{selectedConv.name}</span>
+                </div>
+              </div>
+              <div className="text-right text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                <span>room {selectedConv.room}</span>
+                <span className="mx-1.5">•</span>
+                <span>{selectedConv.bookingNo}</span>
+              </div>
+            </div>
+
+            {/* Scrollable messages container */}
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 space-y-4 min-h-[250px]">
+              {selectedConv.messages.map((m, idx) => {
+                const isGuest = m.sender === 'guest';
+                const isAI = m.sender === 'ai';
+                return (
+                  <div
+                    key={idx}
+                    className={`flex flex-col gap-1 max-w-[85%] text-left ${
+                      !isGuest ? 'ml-auto items-end' : 'items-start'
+                    }`}
+                  >
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                      {isGuest ? `${selectedConv.name} • ${m.channel} • ${m.time}` : (isAI ? `AI Autopilot • ${m.time}` : `Amélie Dupret • ${m.time}`)}
+                    </span>
+                    <div 
+                      className={`p-4 rounded-2xl text-xs leading-relaxed font-medium shadow-xs ${
+                        isGuest 
+                          ? 'bg-white border border-[#E7E4DD] text-slate-800' 
+                          : 'bg-[#105F39] text-white'
+                      }`}
+                    >
+                      {m.text}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* AI Draft Suggestion Box */}
+            <div className="p-6 border-t border-[#E7E4DD] bg-white space-y-4 shrink-0">
+              
+              {/* Draft info header */}
+              {selectedConv.aiDraft ? (
+                <div className="flex items-start gap-2 text-[11px] text-slate-500 font-medium leading-relaxed">
+                  <div className="w-5 h-5 bg-[#EBF6EE] rounded flex items-center justify-center text-[#105F39] shrink-0 mt-0.5">
+                    <Bot size={13} />
+                  </div>
+                  <p>
+                    Suggested by the AI from <span className="font-bold underline text-slate-700 cursor-pointer">Room Change Policy.pdf</span> — send it, edit it, or write your own.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 text-[11px] text-slate-500 font-medium leading-relaxed">
+                  <div className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center text-slate-500 shrink-0 mt-0.5">
+                    <User size={13} />
+                  </div>
+                  <p>Write your reply to {selectedConv.name} below.</p>
+                </div>
+              )}
+
+              {/* Mode switch tabs */}
+              <div className="flex gap-4 border-b border-slate-100 pb-1">
+                <button
+                  onClick={() => setActiveChatTab('reply')}
+                  className={`text-xs font-bold pb-2 relative transition-all cursor-pointer ${
+                    activeChatTab === 'reply' ? 'text-slate-800' : 'text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  <span>Reply on WhatsApp</span>
+                  {activeChatTab === 'reply' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#105F39]" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveChatTab('note')}
+                  className={`text-xs font-bold pb-2 relative transition-all cursor-pointer ${
+                    activeChatTab === 'note' ? 'text-slate-800' : 'text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  <span>Internal note</span>
+                  {activeChatTab === 'note' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#105F39]" />
+                  )}
+                </button>
+              </div>
+
+              {/* Input Draft Textarea */}
+              <textarea
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                placeholder="Write your message..."
+                className="w-full h-28 p-4 border border-[#E7E4DD] rounded-xl outline-none focus:ring-2 focus:ring-[#105F39]/20 focus:border-[#105F39] text-xs text-slate-800 font-medium font-sans leading-relaxed resize-none bg-slate-50/10"
+              />
+
+              {/* Action Buttons Toolbar */}
+              <div className="flex items-center gap-2 justify-between flex-wrap pt-1.5 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSendReply}
+                    className="px-4 py-2.5 bg-[#105F39] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer active:scale-98"
+                  >
+                    <Send size={13} />
+                    <span>Send AI reply</span>
+                  </button>
+
+                  {selectedConv.aiDraft && (
+                    <button
+                      onClick={handleResetDraft}
+                      className="px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-98"
+                    >
+                      Reset to AI draft
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <div className="h-6 w-px bg-slate-200 mx-1" />
+                  
+                  <button className="p-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs" title="Take Over">
+                    <User size={13} />
+                    <span className="text-[10px] uppercase font-black tracking-wider">Take over</span>
+                  </button>
+
+                  <button className="p-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs" title="Create Task">
+                    <CheckCircle size={13} />
+                    <span className="text-[10px] uppercase font-black tracking-wider">Create task</span>
+                  </button>
+
+                  <button className="p-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs" title="Escalate">
+                    <AlertCircle size={13} className="text-rose-600" />
+                    <span className="text-[10px] uppercase font-black tracking-wider text-rose-600">Escalate</span>
+                  </button>
+
+                  <button className="p-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs" title="Resolve">
+                    <CheckCircle2 size={13} className="text-emerald-600" />
+                    <span className="text-[10px] uppercase font-black tracking-wider text-emerald-600">Resolve</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Column 3: Guest Profile Details (1/4 width) */}
+          <div className="p-6 space-y-6 overflow-y-auto bg-slate-50/20 text-left h-full min-h-0 flex flex-col">
+            
+            {/* Header info */}
+            <div className="space-y-3 shrink-0">
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <User size={16} className="text-slate-400" />
+                  <span>{selectedConv.name}</span>
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                  {selectedConv.lang}
+                </p>
+              </div>
+
+              {/* Tags row */}
+              <div className="flex flex-wrap gap-1.5">
+                {selectedConv.tags.map((t, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-0.5 bg-slate-100 text-slate-650 border border-slate-200 text-[9px] font-extrabold rounded-md uppercase tracking-wider font-mono"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* PMS reservation detail box */}
+            <div className="bg-white border border-[#E7E4DD] rounded-2xl p-5 shadow-xs space-y-4 shrink-0">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 font-mono flex items-center gap-1.5">
+                <Building2 size={12} className="text-slate-400" />
+                <span>Reservation • from your PMS</span>
+              </h4>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-baseline py-1 border-b border-dashed border-slate-100 text-xs font-semibold">
+                  <span className="text-slate-400">Number</span>
+                  <span className="text-slate-800 font-bold font-mono">{selectedConv.bookingNo}</span>
+                </div>
+                <div className="flex justify-between items-baseline py-1 border-b border-dashed border-slate-100 text-xs font-semibold">
+                  <span className="text-slate-400">Room</span>
+                  <span className="text-slate-800 font-bold font-mono">{selectedConv.room}</span>
+                </div>
+                <div className="flex justify-between items-baseline py-1 border-b border-dashed border-slate-100 text-xs font-semibold">
+                  <span className="text-slate-400">Stay</span>
+                  <span className="text-slate-800 font-bold font-mono">{selectedConv.stay}</span>
+                </div>
+                <div className="flex justify-between items-baseline py-1 border-b border-dashed border-slate-100 text-xs font-semibold">
+                  <span className="text-slate-400">Nights</span>
+                  <span className="text-slate-800 font-bold font-mono">{selectedConv.nights}</span>
+                </div>
+                <div className="flex justify-between items-baseline py-1 border-b border-dashed border-slate-100 text-xs font-semibold">
+                  <span className="text-slate-400">Category</span>
+                  <span className="text-slate-800 font-bold">{selectedConv.category}</span>
+                </div>
+                <div className="flex justify-between items-baseline py-1 border-b border-dashed border-slate-100 text-xs font-semibold">
+                  <span className="text-slate-400">Rate</span>
+                  <span className="text-slate-800 font-bold font-mono">{selectedConv.rate}</span>
+                </div>
+                <div className="flex justify-between items-baseline py-1 text-xs font-semibold">
+                  <span className="text-slate-400">Status</span>
+                  <span className="text-[#105F39] font-extrabold uppercase tracking-wide text-[10px]">{selectedConv.status}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Summary Box */}
+            <div className="space-y-3 flex-1 flex flex-col min-h-0">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 font-mono flex items-center gap-1.5 shrink-0">
+                <Sparkles size={12} className="text-[#105F39]" />
+                <span>AI Summary</span>
+              </h4>
+              <div className="flex-1 overflow-y-auto bg-[#fffdf9] p-4 rounded-2xl border border-amber-100 shadow-xs text-xs text-slate-650 leading-relaxed font-medium">
+                {selectedConv.aiSummary}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
 const Conversations = () => {
   const navigate = useNavigate();
+  const { role } = useApp();
+
+  if (role === ROLES.FRONT_OFFICE) {
+    return <FrontOfficeConversationsView />;
+  }
+
   const [convs, setConvs] = useState(initialConversations);
   const [selectedId, setSelectedId] = useState(null);
   const [activeChannel, setActiveChannel] = useState('ALL');
