@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { DashboardSidebar } from './DashboardSidebar';
 import { Navbar } from './Navbar';
 import { useApp, ROLES } from '../../context/AppContext';
 import { ToastContainer } from '../common/UI';
@@ -21,10 +22,9 @@ export const Layout = () => {
 
   const isBillingRoute = location.pathname.includes('/subscription-billing') || location.pathname.includes('/subscription_billing');
   const showLockScreen = isLocked && !isBillingRoute;
-  const edgeTopClass = activeWorkspace ? 'top-[140px]' : 'top-[100px]';
   const mainClassName = isEdgeToEdge
-    ? `fixed ${edgeTopClass} left-0 right-0 bottom-0 overflow-hidden px-0 pt-0 sm:pt-2 sm:px-6 lg:px-8 lg:pt-2 pb-2 transition-all`
-    : `flex-1 ${activeWorkspace ? 'mt-[140px]' : 'mt-[100px]'} overflow-x-hidden px-2 pt-1.5 sm:pt-2 sm:px-6 lg:px-8 lg:pt-2 pb-8 transition-all relative`;
+    ? `flex-1 overflow-y-auto px-0 pt-0 sm:pt-2 sm:px-6 lg:px-8 lg:pt-2 pb-2 transition-all relative`
+    : `flex-1 overflow-y-auto px-2 pt-1.5 sm:pt-2 sm:px-6 lg:px-8 lg:pt-2 pb-8 transition-all relative`;
 
   const renderLockScreen = () => {
     const isSuspended = hotelSubscription?.status === 'Suspended' || hotelSubscription?.status === 'Failed Payment';
@@ -103,10 +103,10 @@ export const Layout = () => {
           </div>
 
           {/* Premium Call to Action */}
-          <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
             <button
               onClick={() => navigate('/app/subscription-billing?tab=method')}
-              className="px-8 py-4 bg-[#6D4AFF] hover:bg-purple-700 text-white rounded-2xl text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg hover:shadow-xl shadow-purple-200 cursor-pointer w-full sm:w-auto justify-center"
+              className="px-8 py-4 bg-[#6D4AFF] hover:bg-[#5a3ae0] text-white rounded-2xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center"
             >
               {isSuspended ? 'Update Billing Details' : 'Authorize direct debit to activate'}
               <ArrowRight size={14} />
@@ -144,12 +144,13 @@ export const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3] flex min-w-0">
+    <div className="h-screen bg-[#F7F6F3] flex font-sans overflow-hidden">
       {role !== ROLES.FRONT_OFFICE && <Sidebar />}
-      <div className="flex-1 min-h-screen flex flex-col min-w-0 relative">
+      <DashboardSidebar />
+      <div className="flex-1 flex flex-col min-w-0 h-screen relative">
         <Navbar />
         <main className={mainClassName}>
-          <div className={`max-w-[1600px] mx-auto w-full ${isEdgeToEdge ? 'h-full min-h-0' : 'min-h-[calc(100vh-160px)]'} relative`}>
+          <div className={`max-w-[1600px] mx-auto w-full ${isEdgeToEdge ? 'h-full min-h-0' : 'min-h-full'} relative`}>
             <div className={`${showLockScreen ? "filter blur-[3px] pointer-events-none select-none" : ""} ${isEdgeToEdge ? 'h-full min-h-0' : ''}`}>
               <Outlet />
             </div>
@@ -161,4 +162,3 @@ export const Layout = () => {
     </div>
   );
 };
-

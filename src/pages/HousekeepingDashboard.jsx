@@ -8,7 +8,8 @@ import {
   Bell, 
   Sparkles,
   Smartphone,
-  Plus
+  Plus,
+  ChevronDown
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -22,24 +23,28 @@ export const HousekeepingDashboard = () => {
     navigate('/login');
   };
 
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [newTaskData, setNewTaskData] = useState({ title: '', detail: '', room: '', dueBy: '', department: 'Front Office', priority: 'Normal' });
+
   const handleNewTask = () => {
-    const room = prompt('Enter Room Number (e.g., 302):', '302');
-    if (!room) return;
-    const title = prompt('Enter Task Title (e.g., 2 extra pillows):', '2 extra pillows');
-    if (!title) return;
-    const priority = prompt('Enter Priority (High or Normal):', 'Normal');
-    
+    setIsNewTaskModalOpen(true);
+  };
+
+  const handleCreateTask = () => {
+    if (!newTaskData.title || !newTaskData.room) return;
     const newTask = {
       id: `task-${Date.now()}`,
-      room: room,
-      title: title,
-      priority: priority === 'High' ? 'High' : 'Normal',
-      desc: 'Requested by guest.',
-      meta: `💬 Guest WhatsApp · 15:00 · due 16:30 · Guest`,
+      room: newTaskData.room,
+      title: newTaskData.title,
+      priority: newTaskData.priority,
+      desc: newTaskData.detail || '',
+      meta: `📝 Manual entry · ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} · due ${newTaskData.dueBy || '--:--'} · User`,
       status: 'Assigned'
     };
     
     setTasksList(prev => [...prev, newTask]);
+    setIsNewTaskModalOpen(false);
+    setNewTaskData({ title: '', detail: '', room: '', dueBy: '', department: 'Front Office', priority: 'Normal' });
   };
 
   // Navigation view read from query params
@@ -51,24 +56,24 @@ export const HousekeepingDashboard = () => {
 
   // Master Rooms Data List
   const [roomsList, setRoomsList] = useState([
-    { id: '115', title: 'Room 115', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '' },
-    { id: '118', title: 'Room 118', status: 'Dirty', type: 'Departure', assignedTo: 'unassigned', note: 'Checked out 09:05' },
-    { id: '121', title: 'Room 121', status: 'Ready', type: 'Departure', assignedTo: 'Alina Popescu', note: '' },
-    { id: '201', title: 'Room 201', status: 'Dirty', type: 'Departure', assignedTo: 'Maria Silva', note: 'Arrival 16:00' },
-    { id: '205', title: 'Room 205', status: 'Ready', type: 'Stayover', assignedTo: 'Maria Silva', note: '' },
-    { id: '207', title: 'Room 207', status: 'Maintenance', type: 'Departure', assignedTo: 'Maria Silva', note: 'Ceiling stain — leak from 307' },
-    { id: '208', title: 'Room 208', status: 'Dirty', type: 'Departure', assignedTo: 'Inès Duarte', note: 'Baby cot required' },
-    { id: '212', title: 'Room 212', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '' },
-    { id: '216', title: 'Room 216', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '' },
-    { id: '302', title: 'Room 302', status: 'Guest Inside', type: 'Stayover + Linen', assignedTo: 'Inès Duarte', note: 'AC issue open, guest may move to 310' },
-    { id: '307', title: 'Room 307', status: 'Maintenance', type: 'VIP Arrival', assignedTo: 'Inès Duarte', note: 'Shower leak — VIP arrival at 14:00', hasIcon: true },
-    { id: '310', title: 'Room 310', status: 'Ready', type: 'Departure', assignedTo: 'Inès Duarte', note: '' },
-    { id: '312', title: 'Room 312', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '' },
-    { id: '401', title: 'Room 401', status: 'Ready', type: 'Departure', assignedTo: 'Maria Silva', note: 'Early arrival 13:00' },
-    { id: '405', title: 'Room 405', status: 'Dirty', type: 'Departure', assignedTo: 'Maria Silva', note: 'Checked out 09:40 · arrival 17:30' },
-    { id: '409', title: 'Room 409', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '' },
-    { id: '411', title: 'Room 411', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '' },
-    { id: '101', title: 'Room 101', status: 'DND / Occupied', type: 'Stayover', assignedTo: 'unassigned', note: '' }
+    { id: '101', title: 'Room 101', status: 'DND / Occupied', type: 'Stayover', assignedTo: 'unassigned', note: '', subtitleInfo: 'In house · DND active' },
+    { id: '115', title: 'Room 115', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'In house · Alina Popescu' },
+    { id: '118', title: 'Room 118', status: 'Dirty', type: 'Departure', assignedTo: 'unassigned', note: '', subtitleInfo: 'Checked out 09:05 · unassigned' },
+    { id: '121', title: 'Room 121', status: 'Ready', type: 'Departure', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'Checked out · Alina Popescu' },
+    { id: '201', title: 'Room 201', status: 'Cleaning', type: 'Departure', assignedTo: 'Maria Silva', note: '', subtitleInfo: 'Checked out 08:12 · arrival 16:00 · Maria Silva' },
+    { id: '205', title: 'Room 205', status: 'Ready', type: 'Stayover', assignedTo: 'Maria Silva', note: '', subtitleInfo: 'In house · Maria Silva' },
+    { id: '207', title: 'Room 207', status: 'Maintenance', type: 'Departure', assignedTo: 'Maria Silva', note: 'Ceiling stain — leak from 307', subtitleInfo: 'Vacant · arrival 15:00 · Maria Silva' },
+    { id: '208', title: 'Room 208', status: 'Dirty', type: 'Departure', assignedTo: 'Inès Duarte', note: 'Baby cot required', subtitleInfo: 'Vacant · arrival 14:00 · Inès Duarte' },
+    { id: '212', title: 'Room 212', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '', subtitleInfo: 'In house · Kadir Yılmaz' },
+    { id: '216', title: 'Room 216', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '', subtitleInfo: 'In house · Kadir Yılmaz' },
+    { id: '302', title: 'Room 302', status: 'Guest Inside', type: 'Stayover + Linen', assignedTo: 'Inès Duarte', note: 'AC issue open, guest may move to 310', subtitleInfo: 'In house — unhappy · Inès Duarte' },
+    { id: '307', title: 'Room 307', status: 'Maintenance', type: 'VIP Arrival', assignedTo: 'Inès Duarte', note: 'Shower leak — VIP arrival at 14:00', hasIcon: true, subtitleInfo: 'Vacant · arrival 14:00 · Inès Duarte' },
+    { id: '310', title: 'Room 310', status: 'Ready', type: 'Departure', assignedTo: 'Inès Duarte', note: '', subtitleInfo: 'Checked out · Inès Duarte' },
+    { id: '312', title: 'Room 312', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '', subtitleInfo: 'In house · Kadir Yılmaz' },
+    { id: '401', title: 'Room 401', status: 'Ready', type: 'Departure', assignedTo: 'Maria Silva', note: 'Early arrival 13:00', subtitleInfo: 'Checked out · early arrival 13:00 · Maria Silva' },
+    { id: '405', title: 'Room 405', status: 'Dirty', type: 'Departure', assignedTo: 'Maria Silva', note: '', subtitleInfo: 'Checked out 09:40 · arrival 17:30 · Maria Silva' },
+    { id: '409', title: 'Room 409', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'In house · Alina Popescu' },
+    { id: '411', title: 'Room 411', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'In house · Alina Popescu' }
   ]);
 
   // Master Housekeeping Tasks List
@@ -79,8 +84,12 @@ export const HousekeepingDashboard = () => {
   ]);
 
   // Rooms Filter and Floor Filter States
-  const [roomsFilter, setRoomsFilter] = useState('all'); // 'all', 'dirty', 'cleaning', 'ready', 'dnd', 'maintenance', 'vip', 'early', 'departures'
-  const [floorFilter, setFloorFilter] = useState('all'); // 'all', '1', '2', '3', '4'
+  const [roomsFilter, setRoomsFilter] = useState('all');
+  const [floorFilter, setFloorFilter] = useState('all');
+  // Attendant filter and WhatsApp panel state
+  const [attendantFilter, setAttendantFilter] = useState('all');
+  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
+  const [waStaffTab, setWaStaffTab] = useState('maria');
 
   // Action: Start Cleaning Room
   const handleStartRoom = (id) => {
@@ -112,14 +121,27 @@ export const HousekeepingDashboard = () => {
     }));
   };
 
-  // Action: Toggle DND
+  // Action: Inspect Room — marks as Inspected (verified clean)
+  const handleInspectRoom = (id) => {
+    setRoomsList(prev => prev.map(room => {
+      if (room.id === id) {
+        return { ...room, status: 'Inspected' };
+      }
+      return room;
+    }));
+  };
+
+  // Action: Toggle DND — stores previous status so Clear DND restores it
   const handleToggleDnd = (id) => {
     setRoomsList(prev => prev.map(room => {
       if (room.id === id) {
-        return { 
-          ...room, 
-          status: room.status === 'DND / Occupied' ? 'Ready' : 'DND / Occupied' 
-        };
+        if (room.status === 'DND / Occupied') {
+          // Restore to previous status or default to Ready
+          return { ...room, status: room.prevStatus || 'Ready', prevStatus: undefined };
+        } else {
+          // Save current status before switching to DND
+          return { ...room, prevStatus: room.status, status: 'DND / Occupied' };
+        }
       }
       return room;
     }));
@@ -139,7 +161,8 @@ export const HousekeepingDashboard = () => {
   const getKpiCounts = () => {
     const toClean = roomsList.filter(r => r.status === 'Dirty').length;
     const cleaning = roomsList.filter(r => r.status === 'Cleaning').length;
-    const ready = roomsList.filter(r => r.status === 'Ready').length;
+    // Inspected counts as released/ready
+    const ready = roomsList.filter(r => r.status === 'Ready' || r.status === 'Inspected').length;
     const dnd = roomsList.filter(r => r.status === 'DND / Occupied' || r.status === 'Guest Inside').length;
     const maintenance = roomsList.filter(r => r.status === 'Maintenance').length;
     const vip = roomsList.filter(r => r.type.includes('VIP')).length;
@@ -158,7 +181,7 @@ export const HousekeepingDashboard = () => {
     // Filter by type
     if (roomsFilter === 'dirty') result = result.filter(r => r.status === 'Dirty');
     else if (roomsFilter === 'cleaning') result = result.filter(r => r.status === 'Cleaning');
-    else if (roomsFilter === 'ready') result = result.filter(r => r.status === 'Ready');
+    else if (roomsFilter === 'ready') result = result.filter(r => r.status === 'Ready' || r.status === 'Inspected');
     else if (roomsFilter === 'dnd') result = result.filter(r => r.status === 'DND / Occupied' || r.status === 'Guest Inside');
     else if (roomsFilter === 'maintenance') result = result.filter(r => r.status === 'Maintenance');
     else if (roomsFilter === 'vip') result = result.filter(r => r.type.includes('VIP'));
@@ -175,8 +198,10 @@ export const HousekeepingDashboard = () => {
 
   // Get Priority rooms specifically for Dashboard view (fixed subset)
   const getPriorityRooms = () => {
-    const prioritySubset = ['307', '208', '207', '302', '405', '118'];
-    return roomsList.filter(r => prioritySubset.includes(r.id));
+    const prioritySubset = ['307', '208', '207', '302', '201', '405'];
+    return prioritySubset
+      .map(id => roomsList.find(r => r.id === id))
+      .filter(Boolean);
   };
 
   // Compute Task KPIs
@@ -221,8 +246,6 @@ export const HousekeepingDashboard = () => {
               {activeView === 'rooms' ? 'Rooms' : activeView === 'tasks' ? 'Housekeeping tasks' : 'Housekeeping — the floor at a glance'}
             </h1>
           </div>
-
-
         </header>
 
         {/* Dynamic View Switcher */}
@@ -413,13 +436,13 @@ export const HousekeepingDashboard = () => {
                         {/* Room Info Block */}
                         <div className="flex-1 min-w-0 text-left space-y-0.5">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-900">{room.title}</span>
+                            <span className="text-xs font-bold text-slate-900">{room.type}</span>
                             {room.hasIcon && (
-                              <span className="text-slate-400 font-sans text-[10px]">👑</span>
+                              <span className="text-[11px]">👑</span>
                             )}
                           </div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                            {room.type} · {room.assignedTo}
+                          <p className="text-[10px] text-slate-400 font-medium font-sans italic">
+                            {room.subtitleInfo || `${room.assignedTo}`}
                           </p>
                           {room.note && (
                             <p className="text-[10px] text-amber-600 font-medium font-sans">
@@ -432,32 +455,38 @@ export const HousekeepingDashboard = () => {
                         <div className="shrink-0">
                           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border font-sans uppercase tracking-wider ${statusBadgeClass}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass}`} />
-                            {room.status}
+                            {room.status === 'Maintenance' ? 'Maintenance' : room.status === 'Dirty' ? 'Dirty' : room.status === 'Guest Inside' ? 'Guest Inside' : room.status === 'Cleaning' ? 'Cleaning' : room.status}
                           </span>
                         </div>
 
                         {/* Action buttons */}
                         <div className="flex gap-2 shrink-0 font-sans">
-                          {!isReady && (
+                          {!isReady && !isInProgress && (
                             <button 
                               onClick={() => handleStartRoom(room.id)}
-                              disabled={isInProgress}
-                              className={`px-3 py-1.5 border border-slate-200 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs ${
-                                isInProgress ? 'bg-slate-50 text-slate-405' : 'bg-white hover:bg-slate-50 text-slate-700'
-                              }`}
+                              className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
                             >
                               Start
                             </button>
                           )}
-                          {!isReady ? (
+                          {isInProgress && (
+                            <button 
+                              onClick={() => handleStartRoom(room.id)}
+                              disabled
+                              className="px-3 py-1.5 border border-slate-200 rounded-xl text-[11px] font-bold bg-slate-50 text-slate-400 cursor-default shadow-xs"
+                            >
+                              Start
+                            </button>
+                          )}
+                          {isReady ? (
+                            <span className="text-[11px] font-bold text-emerald-600 px-4 font-mono select-none flex items-center">Released ✓</span>
+                          ) : (
                             <button 
                               onClick={() => handleReleaseRoom(room.id)}
                               className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
                             >
                               Release
                             </button>
-                          ) : (
-                            <span className="text-[11px] font-bold text-emerald-600 px-4 font-mono select-none">Released ✓</span>
                           )}
                         </div>
 
@@ -721,238 +750,389 @@ export const HousekeepingDashboard = () => {
           </div>
         ) : activeView === 'rooms' ? (
           /* ========================================================================= */
-          /* VIEW 2: CHOOSE WHAT TO DO FIRST (ROOMS PAGE VIEW)                          */
+          /* VIEW 2: ROOMS LIST VIEW (IMAGE 2 STYLE)                                   */
           /* ========================================================================= */
-          <div className="flex-1 p-8 space-y-8 min-h-0 text-left">
-            
-            {/* Main Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none">
-              <div className="space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">ROOMS</span>
-                <h2 className="text-2xl font-bold text-slate-955 tracking-tight font-serif">Choose what to do first</h2>
-                <p className="text-xs text-slate-550 max-w-2xl font-medium leading-relaxed font-sans">
-                  Check statuses, view housekeeper notes, assign staff or override cleaning priorities.
-                </p>
-              </div>
-              <button 
-                onClick={() => {
-                  setRoomsList(prev => prev.map(r => r.status !== 'Ready' ? { ...r, status: 'Ready' } : r));
-                  alert('All rooms marked Cleaned / Released!');
-                }}
-                className="px-5 py-2.5 bg-[#0F5132] hover:bg-[#0b4227] text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0 font-sans flex items-center gap-1.5"
-              >
-                <Plus size={14} />
-                <span>Release all</span>
-              </button>
-            </div>
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0 text-left overflow-hidden relative">
 
-            {/* Filter pills switcher row */}
-            <div className="flex flex-wrap gap-2 select-none shrink-0 font-sans">
-              <button 
-                onClick={() => setRoomsFilter('all')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'all' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
-                }`}
-              >
-                All <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'all' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{roomsList.length}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('dirty')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'dirty' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-655 hover:bg-slate-50'
-                }`}
-              >
-                To Clean <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'dirty' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.toClean}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('cleaning')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'cleaning' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-655 hover:bg-slate-50'
-                }`}
-              >
-                Cleaning <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'cleaning' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.cleaning}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('ready')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'ready' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
-                }`}
-              >
-                Ready <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'ready' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.ready}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('dnd')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'dnd' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
-                }`}
-              >
-                DND / Occupied <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'dnd' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.dnd}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('maintenance')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'maintenance' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
-                }`}
-              >
-                Maintenance <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'maintenance' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.maintenance}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('vip')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'vip' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
-                }`}
-              >
-                VIP <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'vip' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.vip}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('early')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'early' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-655 hover:bg-slate-50'
-                }`}
-              >
-                Early Arrivals <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'early' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.early}</span>
-              </button>
-              <button 
-                onClick={() => setRoomsFilter('departures')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  roomsFilter === 'departures' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-655 hover:bg-slate-50'
-                }`}
-              >
-                Departures <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${roomsFilter === 'departures' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{kpis.departures}</span>
-              </button>
-            </div>
+            {/* Main content column */}
+            <div className={`flex flex-col overflow-y-auto ${showWhatsAppPanel ? 'flex-none lg:flex-1' : 'flex-1'}`}>
+              <div className="p-4 sm:p-8 space-y-5">
 
-            {/* Sub-filters row by floor level */}
-            <div className="flex gap-2.5 border-b border-[#E7E4DD] pb-3 text-xs font-bold select-none font-sans shrink-0">
-              <span className="text-slate-400">Floors:</span>
-              {['all', '1', '2', '3', '4'].map((floor) => (
-                <button
-                  key={floor}
-                  onClick={() => setFloorFilter(floor)}
-                  className={`hover:text-slate-900 cursor-pointer ${
-                    floorFilter === floor ? 'text-[#105F39] underline decoration-2 underline-offset-4' : 'text-slate-550'
-                  }`}
-                >
-                  {floor === 'all' ? 'All floors' : `Floor ${floor}`}
-                </button>
-              ))}
-            </div>
+                {/* Header */}
+                <div className="flex flex-wrap md:flex-row items-start justify-between gap-4 select-none">
+                  <div className="space-y-1 max-w-[50%] sm:max-w-none">
+                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">ROOMS</span>
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight font-serif">
+                      {kpis.ready} released, {kpis.toClean + kpis.cleaning} still to clean.
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium font-sans leading-relaxed hidden sm:block">
+                      Every line here can be changed from a phone.{' '}
+                      <span className="text-[#105F39] font-semibold">Releasing a room tells reception and the guest automatically.</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowWhatsAppPanel(v => !v)}
+                    className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold border transition-all cursor-pointer shrink-0 font-sans shadow-xs ${
+                      showWhatsAppPanel
+                        ? 'bg-[#105F39] text-white border-[#105F39]'
+                        : 'bg-white text-slate-700 border-[#E7E4DD] hover:bg-slate-50'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    {showWhatsAppPanel ? 'Hide WhatsApp view' : 'Show WhatsApp view'}
+                  </button>
+                </div>
 
-            {/* Grid display of 18 Rooms */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 font-sans">
-              {getFilteredRooms().map((room) => {
-                const isMaintenance = room.status === 'Maintenance';
-                const isDirty = room.status === 'Dirty';
-                const isGuestInside = room.status === 'Guest Inside';
-                const isReady = room.status === 'Ready';
-                const isInProgress = room.status === 'Cleaning' || room.status === 'In Progress';
+                <div className={`${showWhatsAppPanel ? 'hidden lg:block' : 'block'}`}>
+                {/* Status filter pills */}
+                <div className="flex flex-wrap gap-1.5 select-none font-sans">
+                  {[
+                    { key: 'all', label: 'All', count: roomsList.length },
+                    { key: 'dirty', label: 'Dirty', count: roomsList.filter(r => r.status === 'Dirty').length },
+                    { key: 'cleaning', label: 'Cleaning', count: roomsList.filter(r => r.status === 'Cleaning').length },
+                    { key: 'ready', label: 'Clean', count: roomsList.filter(r => r.status === 'Ready').length },
+                    { key: 'inspected', label: 'Inspected', count: roomsList.filter(r => r.status === 'Inspected').length },
+                    { key: 'dnd', label: 'DND', count: roomsList.filter(r => r.status === 'DND / Occupied').length },
+                    { key: 'guest', label: 'Guest Inside', count: roomsList.filter(r => r.status === 'Guest Inside').length },
+                    { key: 'maintenance', label: 'Maintenance', count: roomsList.filter(r => r.status === 'Maintenance').length },
+                  ].map(pill => (
+                    <button
+                      key={pill.key}
+                      onClick={() => setRoomsFilter(pill.key)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                        roomsFilter === pill.key
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-600 border-[#E7E4DD] hover:bg-slate-50'
+                      }`}
+                    >
+                      {pill.label}
+                      <span className={`text-[10px] font-black font-mono rounded-full px-1.5 leading-5 ${
+                        roomsFilter === pill.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}>{pill.count}</span>
+                    </button>
+                  ))}
+                </div>
 
-                let statusBadgeClass = 'bg-slate-50 text-slate-605 border-slate-150';
-                let statusDotClass = 'bg-slate-400';
-
-                if (isMaintenance || isDirty) {
-                  statusBadgeClass = 'bg-red-50 text-red-700 border-red-200/60';
-                  statusDotClass = 'bg-red-500';
-                } else if (isGuestInside) {
-                  statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200/60';
-                  statusDotClass = 'bg-amber-500';
-                } else if (isReady) {
-                  statusBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
-                  statusDotClass = 'bg-emerald-500';
-                } else if (isInProgress) {
-                  statusBadgeClass = 'bg-blue-50 text-blue-700 border-blue-200/60';
-                  statusDotClass = 'bg-blue-500 animate-pulse';
-                }
-
-                return (
-                  <div key={room.id} className="bg-white rounded-3xl border border-[#E7E4DD] shadow-xs p-5 flex flex-col justify-between gap-4 text-left">
-                    
-                    {/* Header info */}
-                    <div className="flex justify-between items-baseline select-none">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base font-bold text-slate-905 font-mono">{room.id}</span>
-                        {room.hasIcon && (
-                          <span className="text-[10px]">👑</span>
-                        )}
-                      </div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black border uppercase tracking-wider font-mono ${statusBadgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass}`} />
-                        {room.status}
-                      </span>
-                    </div>
-
-                    {/* Metadata details */}
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-900 leading-tight">
-                        {room.type}
-                      </p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                        Attendant: {room.assignedTo}
-                      </p>
-                      {room.note && (
-                        <p className="text-[10px] text-amber-600 font-medium font-sans">
-                          {room.note}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Action buttons list */}
-                    <div className="border-t border-slate-100 pt-3 flex gap-2 font-sans">
-                      {isReady ? (
-                        <>
-                          <button 
-                            onClick={() => handleMarkDirty(room.id)}
-                            className="flex-1 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs"
-                          >
-                            Dirty
-                          </button>
-                          <button 
-                            onClick={() => alert(`Inspection started for Room ${room.id}`)}
-                            className="flex-1 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs"
-                          >
-                            Inspect
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button 
-                            onClick={() => handleStartRoom(room.id)}
-                            disabled={isInProgress}
-                            className={`flex-1 py-1.5 border border-slate-200 rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs ${
-                              isInProgress ? 'bg-slate-50 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'
-                            }`}
-                          >
-                            Start
-                          </button>
-                          <button 
-                            onClick={() => handleReleaseRoom(room.id)}
-                            className="flex-1 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs"
-                          >
-                            Cleaned
-                          </button>
-                        </>
-                      )}
-                      
-                      <button 
-                        onClick={() => handleToggleDnd(room.id)}
-                        className={`px-3.5 py-1.5 border border-slate-200 rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs ${
-                          room.status === 'DND / Occupied' ? 'bg-amber-50 text-amber-700 border-amber-200/60' : 'bg-white hover:bg-slate-50 text-slate-700'
+                {/* Attendant + Floor filter row */}
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-sans select-none border-b border-[#E7E4DD] pb-4 mt-5">
+                  {/* Attendants */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {['all', 'maria', 'ines', 'kadir', 'alina'].map(att => (
+                      <button
+                        key={att}
+                        onClick={() => setAttendantFilter(att)}
+                        className={`text-xs font-bold cursor-pointer transition-colors ${
+                          attendantFilter === att ? 'text-slate-900 underline decoration-2 underline-offset-4' : 'text-slate-400 hover:text-slate-700'
                         }`}
                       >
-                        Set DND
+                        {att === 'all' ? 'All attendants' : att === 'maria' ? 'Maria' : att === 'ines' ? 'Inès' : att === 'kadir' ? 'Kadir' : 'Alina'}
                       </button>
-                    </div>
-
+                    ))}
                   </div>
-                );
-              })}
 
-              {getFilteredRooms().length === 0 && (
-                <div className="col-span-full py-12 text-center text-slate-400 text-xs font-semibold select-none font-sans">
-                  No rooms match your active filters.
+                  <div className="w-px h-4 bg-[#E7E4DD] hidden sm:block" />
+
+                  {/* Floors */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {['all', '1', '2', '3', '4'].map(floor => (
+                      <button
+                        key={floor}
+                        onClick={() => setFloorFilter(floor)}
+                        className={`text-xs font-bold cursor-pointer transition-colors ${
+                          floorFilter === floor ? 'text-slate-900 underline decoration-2 underline-offset-4' : 'text-slate-400 hover:text-slate-700'
+                        }`}
+                      >
+                        {floor === 'all' ? 'All floors' : `Floor ${floor}`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
+
+                {/* Rooms List */}
+                <div className="space-y-2 font-sans mt-4">
+                  {(() => {
+                    let result = roomsList;
+                    // Status filter
+                    if (roomsFilter === 'dirty') result = result.filter(r => r.status === 'Dirty');
+                    else if (roomsFilter === 'cleaning') result = result.filter(r => r.status === 'Cleaning');
+                    else if (roomsFilter === 'ready') result = result.filter(r => r.status === 'Ready');
+                    else if (roomsFilter === 'inspected') result = result.filter(r => r.status === 'Inspected');
+                    else if (roomsFilter === 'dnd') result = result.filter(r => r.status === 'DND / Occupied');
+                    else if (roomsFilter === 'guest') result = result.filter(r => r.status === 'Guest Inside');
+                    else if (roomsFilter === 'maintenance') result = result.filter(r => r.status === 'Maintenance');
+                    // Attendant filter
+                    if (attendantFilter !== 'all') {
+                      const nameMap = { maria: 'Maria Silva', ines: 'Inès Duarte', kadir: 'Kadir Yılmaz', alina: 'Alina Popescu' };
+                      result = result.filter(r => r.assignedTo === nameMap[attendantFilter]);
+                    }
+                    // Floor filter
+                    if (floorFilter !== 'all') result = result.filter(r => r.id.startsWith(floorFilter));
+
+                    if (result.length === 0) return (
+                      <div className="py-16 text-center text-slate-400 text-xs font-semibold select-none">No rooms match your active filters.</div>
+                    );
+
+                    return result.map(room => {
+                      const isMaintenance = room.status === 'Maintenance';
+                      const isDirty = room.status === 'Dirty';
+                      const isGuestInside = room.status === 'Guest Inside';
+                      const isReady = room.status === 'Ready';
+                      const isInspected = room.status === 'Inspected';
+                      const isDnd = room.status === 'DND / Occupied';
+                      const isInProgress = room.status === 'Cleaning';
+
+                      // Status badge config
+                      let dotColor = 'bg-slate-400';
+                      let badgeText = room.status;
+                      if (isMaintenance) dotColor = 'bg-orange-500';
+                      else if (isDirty) dotColor = 'bg-red-500';
+                      else if (isInProgress) dotColor = 'bg-blue-500 animate-pulse';
+                      else if (isDnd || isGuestInside) dotColor = 'bg-amber-500';
+                      else if (isInspected) dotColor = 'bg-teal-500';
+                      else if (isReady) dotColor = 'bg-emerald-500';
+
+                      // Occupancy label
+                      const occupancy = isGuestInside ? 'Occupied' : isDnd ? 'DND' : (room.subtitleInfo?.startsWith('In house') ? 'In house' : 'Vacant');
+
+                      // Priority based on type
+                      const priority = room.type.includes('VIP') ? 'High' : (room.type.includes('Departure') ? 'Normal' : 'Low');
+                      const priorityColor = priority === 'High' ? 'text-red-600' : priority === 'Normal' ? 'text-slate-600' : 'text-slate-400';
+
+                      // Time based on subtitleInfo
+                      const timeMatch = room.subtitleInfo?.match(/(\d{2}:\d{2})/);
+                      const displayTime = timeMatch ? timeMatch[1] : '—';
+
+                      return (
+                        <div key={room.id} className="bg-white border border-[#E7E4DD] rounded-2xl px-6 py-4 hover:shadow-sm transition-all">
+                          <div className="flex items-start justify-between gap-4">
+
+                            {/* Left: Room info */}
+                            <div className="flex-1 min-w-0 space-y-2">
+                              {/* Room number + status badge */}
+                              <div className="flex items-center gap-2.5 flex-wrap">
+                                <span className="text-xl font-bold text-slate-900 font-mono leading-none">
+                                  {room.id}{room.hasIcon && ' 👑'}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                                  {(isDnd || isGuestInside) ? (
+                                    <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                                  ) : isMaintenance ? (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                  ) : isDirty ? (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                  ) : isInProgress ? (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                  ) : isInspected ? (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                                  ) : (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  )}
+                                  <span className={`${
+                                    isMaintenance ? 'text-orange-700' :
+                                    isDirty ? 'text-red-700' :
+                                    isInProgress ? 'text-blue-700' :
+                                    isDnd || isGuestInside ? 'text-amber-700' :
+                                    isInspected ? 'text-teal-700' : 'text-emerald-700'
+                                  }`}>{room.status}</span>
+                                </span>
+                              </div>
+
+                              {/* Type · Occupancy · Priority */}
+                              <div className="flex items-center gap-2 text-xs text-slate-600 flex-wrap">
+                                <span className="font-semibold">{room.type}</span>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-slate-500">{occupancy}</span>
+                                <span className="text-slate-300">—</span>
+                                <span className={`font-semibold ${priorityColor}`}>{priority}</span>
+                              </div>
+
+                              {/* Note */}
+                              {room.note && (
+                                <p className="text-[11px] text-amber-600 font-medium">{room.note}</p>
+                              )}
+
+                              {/* Attendant + time */}
+                              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                <span className="font-semibold text-slate-600">{room.assignedTo}</span>
+                                {displayTime !== '—' && (
+                                  <><span className="text-slate-300">·</span><span className="font-mono">{displayTime}</span></>
+                                )}
+                              </div>
+
+                              {/* Action buttons — WhatsApp-style status changers */}
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {/* Cleaning */}
+                                <button
+                                  onClick={() => handleStartRoom(room.id)}
+                                  disabled={isInProgress}
+                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                    isInProgress
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200 cursor-default'
+                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200'
+                                  }`}
+                                >
+                                  Cleaning
+                                </button>
+
+                                {/* Clean */}
+                                <button
+                                  onClick={() => handleReleaseRoom(room.id)}
+                                  disabled={isReady}
+                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                    isReady
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 cursor-default'
+                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'
+                                  }`}
+                                >
+                                  Clean
+                                </button>
+
+                                {/* Inspected */}
+                                <button
+                                  onClick={() => handleInspectRoom(room.id)}
+                                  disabled={isInspected}
+                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                    isInspected
+                                      ? 'bg-teal-50 text-teal-700 border-teal-200 cursor-default'
+                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200'
+                                  }`}
+                                >
+                                  Inspected
+                                </button>
+
+                                {/* Guest Inside */}
+                                <button
+                                  onClick={() => setRoomsList(prev => prev.map(r => r.id === room.id ? { ...r, status: 'Guest Inside' } : r))}
+                                  disabled={isGuestInside}
+                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                    isGuestInside
+                                      ? 'bg-amber-50 text-amber-700 border-amber-200 cursor-default'
+                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200'
+                                  }`}
+                                >
+                                  Guest Inside
+                                </button>
+
+                                {/* Maintenance */}
+                                <button
+                                  onClick={() => setRoomsList(prev => prev.map(r => r.id === room.id ? { ...r, status: 'Maintenance' } : r))}
+                                  disabled={isMaintenance}
+                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                    isMaintenance
+                                      ? 'bg-orange-50 text-orange-700 border-orange-200 cursor-default'
+                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200'
+                                  }`}
+                                >
+                                  Maintenance
+                                </button>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+                </div>
+
+              </div>
             </div>
+
+            {/* WhatsApp Side Panel */}
+            {showWhatsAppPanel && (
+              <div className="w-full lg:w-80 shrink-0 bg-white lg:border-l border-[#E7E4DD] flex flex-col flex-1 lg:flex-none lg:h-full overflow-y-auto">
+                <div className="p-5 border-b border-[#E7E4DD] space-y-1">
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono block">WHATSAPP OPERATIONS LAYER</span>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed font-sans">
+                    This is what your team sees on their phones. Tap a button as they would — the dashboard updates immediately.
+                  </p>
+                </div>
+
+                {/* Staff tab switcher */}
+                <div className="flex gap-2 p-4 border-b border-[#E7E4DD] font-sans">
+                  {[
+                    { key: 'maria', label: 'Maria' },
+                    { key: 'ines', label: 'Inès' },
+                    { key: 'kadir', label: 'Kadir' },
+                    { key: 'alina', label: 'Alina' },
+                  ].map(s => (
+                    <button
+                      key={s.key}
+                      onClick={() => setWaStaffTab(s.key)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        waStaffTab === s.key ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-650'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Chat area */}
+                <div className="flex flex-col flex-1">
+                  {/* Chat header */}
+                  <div className="bg-white px-4 py-3 border-b border-[#E7E4DD] flex items-center gap-2.5 font-sans">
+                    <div className="w-8 h-8 bg-[#EBF6EE] rounded-lg flex items-center justify-center text-[#105F39] font-bold text-xs shrink-0">
+                      {waStaffTab === 'maria' ? 'MS' : waStaffTab === 'ines' ? 'ID' : waStaffTab === 'kadir' ? 'KY' : 'AP'}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">
+                        {waStaffTab === 'maria' ? 'Maria Silva' : waStaffTab === 'ines' ? 'Inès Duarte' : waStaffTab === 'kadir' ? 'Kadir Yılmaz' : 'Alina Popescu'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                        {waStaffTab === 'maria' ? 'Fl. 2 & 4' : waStaffTab === 'ines' ? 'Fl. 3 · Supervisor' : waStaffTab === 'kadir' ? 'Fl. 2' : 'Fl. 1'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Chat messages */}
+                  <div className="bg-[#efeae2] flex-1 p-4 space-y-3 overflow-y-auto min-h-[200px]">
+                    {/* System message */}
+                    <div className="bg-white rounded-2xl shadow-xs overflow-hidden max-w-[90%] font-sans">
+                      <div className="p-3.5 pb-2 space-y-1">
+                        <p className="text-xs text-slate-800 font-semibold leading-normal">
+                          {waStaffTab === 'maria' && 'Next room: 405 — Departure, arrival 17:30.'}
+                          {waStaffTab === 'ines' && 'Next room: 307 — VIP Arrival at 14:00.'}
+                          {waStaffTab === 'kadir' && 'Next room: 212 — Stayover linen change.'}
+                          {waStaffTab === 'alina' && 'Next room: 115 — Stayover, in house.'}
+                        </p>
+                        <p className="text-[9px] text-slate-400 font-bold text-right font-mono">
+                          {waStaffTab === 'maria' ? '15:02' : waStaffTab === 'ines' ? '13:48' : waStaffTab === 'kadir' ? '14:15' : '11:30'}
+                        </p>
+                      </div>
+                      {/* WhatsApp action buttons */}
+                      <div className="border-t border-slate-100 divide-y divide-slate-100 flex flex-col">
+                        {['Cleaning', 'Clean', 'Inspected', 'Guest Inside', 'Maintenance'].map(action => {
+                          const roomId = waStaffTab === 'maria' ? '405' : waStaffTab === 'ines' ? '307' : waStaffTab === 'kadir' ? '212' : '115';
+                          return (
+                            <button
+                              key={action}
+                              onClick={() => {
+                                if (action === 'Cleaning') handleStartRoom(roomId);
+                                else if (action === 'Clean') handleReleaseRoom(roomId);
+                                else if (action === 'Inspected') handleInspectRoom(roomId);
+                                else if (action === 'Guest Inside') setRoomsList(prev => prev.map(r => r.id === roomId ? { ...r, status: 'Guest Inside' } : r));
+                                else if (action === 'Maintenance') setRoomsList(prev => prev.map(r => r.id === roomId ? { ...r, status: 'Maintenance' } : r));
+                              }}
+                              className="w-full text-center py-2.5 text-xs font-bold text-[#0a7cff] hover:bg-slate-50 cursor-pointer transition-colors"
+                            >
+                              {action}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="p-4 text-[10px] text-slate-400 leading-relaxed font-semibold font-sans border-t border-[#E7E4DD]">
+                  Interactive buttons, lists and Flows are sent from your WhatsApp Business number. Staff never open the dashboard to update a room.
+                </p>
+              </div>
+            )}
 
           </div>
         ) : (
@@ -1066,6 +1246,127 @@ export const HousekeepingDashboard = () => {
 
           </div>
         )}
+
+      {/* New Task Modal */}
+      {isNewTaskModalOpen && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-[24px] w-full max-w-[440px] shadow-2xl flex flex-col font-sans">
+              
+              {/* Header */}
+              <div className="flex justify-between items-center p-6 pb-4">
+                <h2 className="text-[19px] font-bold text-slate-900">New task</h2>
+                <button 
+                  onClick={() => setIsNewTaskModalOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 pt-0 space-y-5 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">What needs doing?</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Extra pillows for 208"
+                    value={newTaskData.title}
+                    onChange={e => setNewTaskData({...newTaskData, title: e.target.value})}
+                    className="w-full px-4 py-3 bg-[#F7F6F3] border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#6D4AFF] focus:ring-2 focus:ring-[#6D4AFF]/20 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">Detail (optional)</label>
+                  <textarea
+                    placeholder="Add context..."
+                    value={newTaskData.detail}
+                    onChange={e => setNewTaskData({...newTaskData, detail: e.target.value})}
+                    className="w-full px-4 py-3 bg-[#F7F6F3] border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#6D4AFF] focus:ring-2 focus:ring-[#6D4AFF]/20 transition-all placeholder:text-slate-400 min-h-[90px] resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">Room</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 302"
+                      value={newTaskData.room}
+                      onChange={e => setNewTaskData({...newTaskData, room: e.target.value})}
+                      className="w-full px-4 py-3 bg-[#F7F6F3] border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#6D4AFF] focus:ring-2 focus:ring-[#6D4AFF]/20 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5 relative">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">Due by</label>
+                    <div className="relative">
+                      <input
+                        type="time"
+                        value={newTaskData.dueBy}
+                        onChange={e => setNewTaskData({...newTaskData, dueBy: e.target.value})}
+                        className="w-full pl-4 pr-10 py-3 bg-[#F7F6F3] border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#6D4AFF] focus:ring-2 focus:ring-[#6D4AFF]/20 transition-all placeholder:text-slate-400"
+                        style={{ colorScheme: 'light' }}
+                      />
+                      <Clock size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">Department</label>
+                    <div className="relative">
+                      <select
+                        value={newTaskData.department}
+                        onChange={e => setNewTaskData({...newTaskData, department: e.target.value})}
+                        className="w-full pl-4 pr-10 py-3 bg-[#F7F6F3] border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#6D4AFF] focus:ring-2 focus:ring-[#6D4AFF]/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="Front Office">Front Office</option>
+                        <option value="Housekeeping">Housekeeping</option>
+                        <option value="Maintenance">Maintenance</option>
+                      </select>
+                      <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">Priority</label>
+                    <div className="relative">
+                      <select
+                        value={newTaskData.priority}
+                        onChange={e => setNewTaskData({...newTaskData, priority: e.target.value})}
+                        className="w-full pl-4 pr-10 py-3 bg-[#F7F6F3] border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#6D4AFF] focus:ring-2 focus:ring-[#6D4AFF]/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="Normal">Normal</option>
+                        <option value="High">High</option>
+                        <option value="Low">Low</option>
+                      </select>
+                      <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    onClick={() => setIsNewTaskModalOpen(false)}
+                    className="flex-1 py-3 bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-700 rounded-[14px] text-sm font-bold transition-all cursor-pointer font-sans"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateTask}
+                    className="flex-1 py-3 bg-[#0F5132] hover:bg-[#0b4227] text-white rounded-[14px] text-sm font-bold shadow-sm transition-all cursor-pointer font-sans"
+                  >
+                    Create task
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </>
+      )}
 
       </div>
     </div>

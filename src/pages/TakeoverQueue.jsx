@@ -180,7 +180,7 @@ const FrontOfficeTasksView = () => {
 
   return (
     <div className="h-full overflow-y-auto bg-[#F7F6F3] w-full text-left font-sans">
-      <div className="p-8 space-y-8 max-w-5xl">
+      <div className="p-8 space-y-8">
 
         {/* Page header */}
         <div className="flex items-start justify-between">

@@ -208,6 +208,25 @@ export const Sidebar = () => {
           })}
         </nav>
 
+        {/* WhatsApp ops layer */}
+        <div className="px-4 pb-3">
+          <button
+            className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-[#E7E4DD] rounded-xl text-left hover:bg-[#FAF9F6] transition-all cursor-pointer group shadow-xs"
+          >
+            <div className="w-7 h-7 rounded-lg bg-[#F0FAF4] flex items-center justify-center shrink-0">
+              <MessageSquare size={14} className="text-[#105F39]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[11px] font-bold text-slate-700 group-hover:text-slate-900 transition-colors block leading-tight">
+                WhatsApp ops layer
+              </span>
+              <span className="text-[9px] text-slate-400 font-medium leading-tight block">
+                The AI is watching every channel.
+              </span>
+            </div>
+          </button>
+        </div>
+
         {/* User profile action with modern look */}
         <div className="p-4 border-t border-[#E7E4DD] bg-[#FAF9F6]">
         {activeWorkspace ? (

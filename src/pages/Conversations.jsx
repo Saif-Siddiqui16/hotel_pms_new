@@ -318,6 +318,7 @@ const FrontOfficeConversationsView = () => {
   const [replyText, setReplyText] = useState('');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [activeChatTab, setActiveChatTab] = useState('reply'); // 'reply', 'note'
+  const [mobileView, setMobileView] = useState('list'); // 'list', 'chat', 'info'
 
   // Get active selected conversation
   const selectedConv = conversations.find(c => c.id === selectedId) || conversations[0];
@@ -342,6 +343,20 @@ const FrontOfficeConversationsView = () => {
     }
   }, [selectedId]);
 
+  // Tab definitions
+  const tabsConfig = [
+    { id: 'all', label: 'All', match: c => true },
+    { id: 'ai_handling', label: 'AI handling', match: c => c.tag.toLowerCase().includes('ai handling') },
+    { id: 'human_takeover', label: 'Human takeover', match: c => c.tag.toLowerCase().includes('human takeover') },
+    { id: 'escalated', label: 'Escalated', match: c => c.tag.toLowerCase().includes('escalated') },
+    { id: 'unresolved', label: 'Unresolved', match: c => !c.tag.toLowerCase().includes('resolved') },
+    { id: 'whatsapp', label: 'WhatsApp', match: c => c.messages.some(m => m.channel?.toLowerCase() === 'whatsapp') },
+    { id: 'email', label: 'Email', match: c => c.messages.some(m => m.channel?.toLowerCase() === 'email') },
+    { id: 'pre_arrival', label: 'Pre-arrival', match: c => c.status === 'Expected Today' || c.status === 'Confirmed' },
+    { id: 'in_house', label: 'In-house', match: c => c.status === 'In House' },
+    { id: 'post_stay', label: 'Post-stay', match: c => c.status === 'Departed' },
+  ];
+
   // Filter conversations list based on search and tabs
   const filteredConversations = conversations.filter(c => {
     // Search filter
@@ -350,13 +365,8 @@ const FrontOfficeConversationsView = () => {
                           c.room.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Tab filter
-    if (activeTab === 'ai') {
-      return matchesSearch && (c.tag.includes('AI') || c.tag.includes('Resolved'));
-    }
-    if (activeTab === 'human') {
-      return matchesSearch && (c.tag.includes('Human') || c.tag.includes('Escalated'));
-    }
-    return matchesSearch;
+    const activeTabConfig = tabsConfig.find(t => t.id === activeTab) || tabsConfig[0];
+    return matchesSearch && activeTabConfig.match(c);
   });
 
   const handleSendReply = () => {
@@ -390,7 +400,7 @@ const FrontOfficeConversationsView = () => {
   };
 
   return (
-    <div className="h-screen bg-[#F7F6F3] flex min-w-0 font-sans text-left relative overflow-hidden">
+    <div className="h-full bg-[#F7F6F3] flex min-w-0 font-sans text-left relative overflow-hidden">
       <style>{`
         #front-office-conversations-content,
         #front-office-conversations-content button,
@@ -410,81 +420,13 @@ const FrontOfficeConversationsView = () => {
         }
       `}</style>
       
-      {/* 1. Left Sidebar */}
-      <div className="w-64 border-r border-[#E7E4DD] bg-white flex flex-col justify-between shrink-0 p-5 h-screen sticky top-0 font-sans">
-        <div className="space-y-6">
-          {/* Logo Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#105F39] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm">
-              <Building2 size={20} />
-            </div>
-            <div className="text-left">
-              <h1 className="font-extrabold text-sm tracking-tight text-[#0F5132]">Hotelogx</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider -mt-0.5">CONNECT</p>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="space-y-1">
-            <button
-              onClick={() => navigate('/app')}
-              className="w-full flex items-center gap-3.5 px-4 py-3 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
-            >
-              <LayoutDashboard size={17} className="text-slate-400" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              className="w-full flex items-center justify-between px-4 py-3 bg-[#EBF6EE] text-[#0F5132] rounded-xl text-xs font-black transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-3.5">
-                <MessageSquare size={17} className="text-[#0F5132]" />
-                <span>Conversations</span>
-              </div>
-              <span className="bg-[#0F5132] text-white text-[10px] font-black rounded-full px-2 py-0.5 font-mono">
-                2
-              </span>
-            </button>
-
-            <button
-              onClick={() => navigate('/app/takeover-queue')}
-              className="w-full flex items-center justify-between px-4 py-3 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-3.5">
-                <Clock size={17} className="text-slate-400" />
-                <span>Tasks</span>
-              </div>
-              <span className="bg-slate-200 text-slate-600 text-[10px] font-black rounded-full px-2 py-0.5 font-mono">
-                10
-              </span>
-            </button>
-          </nav>
-        </div>
-
-        {/* Whatsapp ops layer widget in sidebar bottom */}
-        <div className="space-y-2.5 select-none text-left">
-          <button 
-            onClick={() => navigate('/app/takeover-queue')}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs font-sans"
-          >
-            <MessageSquare size={15} className="text-slate-450" />
-            <span>WhatsApp ops layer</span>
-          </button>
-          
-          <div className="flex items-start gap-2 px-2">
-            <Sparkles size={13} className="text-slate-400 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-slate-500 leading-relaxed font-medium font-sans">
-              The AI is watching every channel. You only see what needs you.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Left Sidebar removed as requested */}
 
       {/* 2. Main content page frame */}
-      <div id="front-office-conversations-content" className="flex-1 flex flex-col h-screen min-w-0 bg-[#F7F6F3]">
+      <div id="front-office-conversations-content" className="flex-1 flex flex-col h-full min-w-0 bg-[#F7F6F3]">
         
         {/* Top Header */}
-        <header className="flex justify-between items-center px-8 py-5 border-b border-[#E7E4DD] bg-white">
+        <header className={`justify-between items-center px-6 lg:px-8 py-4 lg:py-5 border-b border-[#E7E4DD] bg-white shrink-0 ${mobileView === 'list' ? 'flex' : 'hidden lg:flex'}`}>
           <div className="text-left space-y-0.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold text-slate-800 font-sans">Hotel Mercier</span>
@@ -494,43 +436,13 @@ const FrontOfficeConversationsView = () => {
             <h1 className="text-base font-bold text-slate-900 font-sans">Guest conversations — the AI drafts, you decide</h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="px-3.5 py-1 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-full font-mono">
-              Front Office
-            </span>
-
-            {/* Notification alert */}
-            <button className="w-9 h-9 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl flex items-center justify-center text-slate-700 relative transition-all cursor-pointer shadow-xs">
-              <Bell size={16} />
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 border-2 border-white rounded-full flex items-center justify-center text-[9px] font-black text-white font-mono">
-                2
-              </span>
-            </button>
-
-            {/* User Profile & Logout */}
-            <div className="flex items-center gap-3 select-none font-sans">
-              <div className="w-8 h-8 bg-[#EBF6EE] text-[#105F39] border border-[#d1e7dd]/60 rounded-xl flex items-center justify-center font-bold text-xs tracking-wider font-mono">
-                AD
-              </div>
-              <span className="text-xs font-bold text-slate-800 font-sans">Amélie</span>
-              <button 
-                onClick={logoutUser}
-                title="Sign Out"
-                className="text-slate-400 hover:text-rose-650 transition-colors cursor-pointer p-1"
-              >
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-            </div>
-          </div>
         </header>
 
         {/* 3 columns body */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-0 min-h-0 bg-white">
+        <div className="flex-1 flex lg:grid lg:grid-cols-4 gap-0 min-h-0 bg-white relative">
           
           {/* Column 1: Conversations List (1/4 width) */}
-          <div className="border-r border-[#E7E4DD] flex flex-col h-full min-h-0">
+          <div className={`border-r border-[#E7E4DD] flex-col h-full min-h-0 w-full lg:w-auto ${mobileView === 'list' ? 'flex' : 'hidden lg:flex'}`}>
             {/* Search */}
             <div className="relative px-4 py-3 border-b border-[#E7E4DD]">
               <Search className="absolute left-7.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
@@ -546,34 +458,24 @@ const FrontOfficeConversationsView = () => {
             {/* Horizontal Tabs with Arrows */}
             <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#E7E4DD] bg-slate-50/40 select-none shrink-0 relative font-sans">
               <button className="text-slate-400 hover:text-slate-650 px-1 text-sm font-bold cursor-pointer">‹</button>
-              <div className="flex-1 flex gap-1.5 overflow-x-auto scrollbar-none justify-center px-1">
-                <button
-                  onClick={() => setActiveTab('all')}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                    activeTab === 'all' ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
-                  }`}
-                >
-                  <span>Unresolved</span>
-                  <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === 'all' ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>8</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('ai')}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                    activeTab === 'ai' ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
-                  }`}
-                >
-                  <span>WhatsApp</span>
-                  <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === 'ai' ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>7</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('human')}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                    activeTab === 'human' ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
-                  }`}
-                >
-                  <span>Email</span>
-                  <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === 'human' ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>4</span>
-                </button>
+              <div className="flex-1 flex gap-1.5 overflow-x-auto scrollbar-none px-1">
+                {tabsConfig.map(tab => {
+                  const count = conversations.filter(tab.match).length;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-3 py-1 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                        activeTab === tab.id ? 'bg-white border border-[#E7E4DD] text-slate-800 shadow-xs' : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-550'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.2 font-mono ${activeTab === tab.id ? 'bg-[#105F39] text-white' : 'bg-slate-200 text-slate-600'}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               <button className="text-slate-400 hover:text-slate-650 px-1 text-sm font-bold cursor-pointer">›</button>
             </div>
@@ -585,7 +487,10 @@ const FrontOfficeConversationsView = () => {
                 return (
                   <div
                     key={c.id}
-                    onClick={() => setSelectedId(c.id)}
+                    onClick={() => {
+                      setSelectedId(c.id);
+                      setMobileView('chat');
+                    }}
                     className={`p-4 text-left transition-all cursor-pointer hover:bg-slate-50/50 flex flex-col gap-2 relative ${
                       isSelected ? 'bg-[#EBF6EE]/40 border-l-4 border-[#105F39]' : ''
                     }`}
@@ -622,32 +527,48 @@ const FrontOfficeConversationsView = () => {
           </div>
 
           {/* Column 2: Chat Pane (2/4 width) */}
-          <div className="lg:col-span-2 flex flex-col h-full min-h-0 border-r border-[#E7E4DD]">
+          <div className={`lg:col-span-2 flex-col h-full min-h-0 border-r border-[#E7E4DD] w-full lg:w-auto ${mobileView === 'chat' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* Active chat header */}
             <div className="px-6 py-4 border-b border-[#E7E4DD] bg-white flex justify-between items-center shrink-0">
-              <div className="text-left space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-900">{chatSubject}</span>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${selectedConv.tagColor}`}>
-                    {selectedConv.tag.split(' ')[0]}
-                  </span>
-                </div>
+              <div className="text-left space-y-0.5 flex items-center gap-3">
+                <button
+                  onClick={() => setMobileView('list')}
+                  className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-slate-900 transition-colors shrink-0"
+                >
+                  <RefreshCw className="rotate-90" size={16} />
+                </button>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900">{chatSubject}</span>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${selectedConv.tagColor}`}>
+                      {selectedConv.tag.split(' ')[0]}
+                    </span>
+                  </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
                   <span>💬 WhatsApp</span>
                   <span>•</span>
                   <span>{selectedConv.name}</span>
                 </div>
+                </div>
               </div>
-              <div className="text-right text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                <span>room {selectedConv.room}</span>
-                <span className="mx-1.5">•</span>
-                <span>{selectedConv.bookingNo}</span>
+              <div className="flex items-center gap-4 text-right text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                <div className="hidden sm:block">
+                  <span>room {selectedConv.room}</span>
+                  <span className="mx-1.5">•</span>
+                  <span>{selectedConv.bookingNo}</span>
+                </div>
+                <button
+                  onClick={() => setMobileView('info')}
+                  className="lg:hidden p-2 bg-slate-50 rounded-lg text-slate-900 border border-slate-200"
+                >
+                  <Info size={14} />
+                </button>
               </div>
             </div>
 
             {/* Scrollable messages container */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 space-y-4 min-h-[250px]">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/30 space-y-4 min-h-[150px]">
               {selectedConv.messages.map((m, idx) => {
                 const isGuest = m.sender === 'guest';
                 const isAI = m.sender === 'ai';
@@ -676,7 +597,7 @@ const FrontOfficeConversationsView = () => {
             </div>
 
             {/* AI Draft Suggestion Box */}
-            <div className="p-6 border-t border-[#E7E4DD] bg-white space-y-4 shrink-0">
+            <div className="p-4 sm:p-6 border-t border-[#E7E4DD] bg-white space-y-3 sm:space-y-4 shrink-0">
               
               {/* Draft info header */}
               {selectedConv.aiDraft ? (
@@ -728,7 +649,7 @@ const FrontOfficeConversationsView = () => {
                 value={replyText}
                 onChange={e => setReplyText(e.target.value)}
                 placeholder="Write your message..."
-                className="w-full h-28 p-4 border border-[#E7E4DD] rounded-xl outline-none focus:ring-2 focus:ring-[#105F39]/20 focus:border-[#105F39] text-xs text-slate-800 font-medium font-sans leading-relaxed resize-none bg-slate-50/10"
+                className="w-full h-24 sm:h-28 p-3 sm:p-4 border border-[#E7E4DD] rounded-xl outline-none focus:ring-2 focus:ring-[#105F39]/20 focus:border-[#105F39] text-xs text-slate-800 font-medium font-sans leading-relaxed resize-none bg-slate-50/10"
               />
 
               {/* Action Buttons Toolbar */}
@@ -781,10 +702,19 @@ const FrontOfficeConversationsView = () => {
           </div>
 
           {/* Column 3: Guest Profile Details (1/4 width) */}
-          <div className="p-6 space-y-6 overflow-y-auto bg-slate-50/20 text-left h-full min-h-0 flex flex-col">
+          <div className={`p-6 space-y-6 overflow-y-auto bg-slate-50/20 text-left h-full min-h-0 flex-col w-full lg:w-auto ${mobileView === 'info' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* Header info */}
             <div className="space-y-3 shrink-0">
+              <div className="flex items-center justify-between lg:hidden mb-4 border-b border-[#E7E4DD] pb-4">
+                <h3 className="text-sm font-bold text-slate-900">Guest Information</h3>
+                <button
+                  onClick={() => setMobileView('chat')}
+                  className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-900"
+                >
+                  <X size={16} />
+                </button>
+              </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <User size={16} className="text-slate-400" />

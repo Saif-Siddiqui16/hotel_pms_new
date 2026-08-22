@@ -989,12 +989,12 @@ export const MaintenanceDashboard = () => {
 
       {/* 3. MODAL OVERLAY: SEND WORK TO A DEPARTMENT (NEW TASK) */}
       {isTaskModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-[1px]">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-8 space-y-6 relative shadow-2xl border border-slate-100 font-sans text-left">
+        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-[1px]">
+          <div className="bg-white rounded-[24px] md:rounded-3xl w-full max-w-lg p-6 md:p-8 space-y-5 relative shadow-2xl border border-slate-100 font-sans text-left max-h-[90vh] overflow-y-auto">
             {/* Header / Title */}
             <button 
               onClick={() => setIsTaskModalOpen(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -1125,12 +1125,12 @@ export const MaintenanceDashboard = () => {
 
       {/* 4. MODAL OVERLAY: OPEN A MAINTENANCE TICKET (NEW ISSUE) */}
       {isIssueModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-[1px]">
-          <div className="bg-white rounded-3xl w-full max-w-md p-8 space-y-6 relative shadow-2xl border border-slate-100 font-sans text-left">
+        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-[1px]">
+          <div className="bg-white rounded-[24px] md:rounded-3xl w-full max-w-md p-6 md:p-8 space-y-5 relative shadow-2xl border border-slate-100 font-sans text-left max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <button 
               onClick={() => setIsIssueModalOpen(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X size={18} />
             </button>
