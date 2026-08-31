@@ -17,6 +17,7 @@ import ActivityLogs from './pages/ActivityLogs';
 import Unauthorized from './pages/Unauthorized';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
+import SetupChecklist from './pages/auth/SetupChecklist';
 import { SuperAdminControlCenter } from './pages/super-admin/SuperAdminControlCenter';
 import Subscriptions from './pages/super-admin/Subscriptions';
 import SuperAdminSettings from './pages/super-admin/SuperAdminSettings';
@@ -41,6 +42,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/setup" element={<SetupChecklist />} />
           <Route path="/onboarding/:token" element={<CredentialSubmission />} />
 
           {/* Protected Enterprise Platform Dashboard */}
