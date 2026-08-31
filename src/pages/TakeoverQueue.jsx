@@ -514,7 +514,17 @@ const TakeoverQueue = () => {
 
     // Department filter mapping
     if (deptFilter !== 'all') {
-      result = result.filter(t => t.department.toLowerCase() === deptFilter.toLowerCase());
+      result = result.filter(t => {
+        const d = (t.department || '').toLowerCase();
+        const p = (t.priority || '').toLowerCase();
+        const m = (t.meta || '').toLowerCase();
+        const tags = (t.tags || []).map(tg => tg.toLowerCase());
+        
+        return d === deptFilter.toLowerCase() || 
+               p === deptFilter.toLowerCase() || 
+               m.includes(deptFilter.toLowerCase()) || 
+               tags.includes(deptFilter.toLowerCase());
+      });
     }
 
     // Status filter mapping
@@ -650,6 +660,30 @@ const TakeoverQueue = () => {
           }`}
         >
           Guest Request <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'guest request' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.department === 'Guest Request').length}</span>
+        </button>
+        <button 
+          onClick={() => setDeptFilter('vip')}
+          className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
+            deptFilter === 'vip' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-600 hover:bg-slate-55'
+          }`}
+        >
+          VIP <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'vip' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => (t.department||'').toLowerCase() === 'vip' || (t.priority||'').toLowerCase() === 'vip' || (t.meta||'').toLowerCase().includes('vip') || (t.tags||[]).map(x=>x.toLowerCase()).includes('vip')).length}</span>
+        </button>
+        <button 
+          onClick={() => setDeptFilter('billing')}
+          className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
+            deptFilter === 'billing' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-600 hover:bg-slate-55'
+          }`}
+        >
+          Billing <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'billing' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => (t.department||'').toLowerCase() === 'billing').length}</span>
+        </button>
+        <button 
+          onClick={() => setDeptFilter('follow-up')}
+          className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
+            deptFilter === 'follow-up' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-600 hover:bg-slate-55'
+          }`}
+        >
+          Follow-up <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'follow-up' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => (t.department||'').toLowerCase() === 'follow-up' || (t.meta||'').toLowerCase().includes('follow-up')).length}</span>
         </button>
 
       </div>

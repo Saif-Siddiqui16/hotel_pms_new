@@ -8,26 +8,25 @@ import { useApp, ROLES } from '../../context/AppContext';
 import { cn } from '../../utils/cn';
 
 export const Navbar = () => {
-  const { user, role, activeWorkspace, hotelSubscription, toggleSidebar, exitWorkspace, setIsAuthenticated, whatsappLogs = [] } = useApp();
+  const { user, role, activeWorkspace, hotelSubscription, toggleSidebar, exitWorkspace, setIsAuthenticated, whatsappLogs = [], hotels = [] } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [showProfile, setShowProfile] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifTab, setNotifTab] = useState('ai'); // 'ai' or 'whatsapp'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const profileRef = useRef(null);
   const notificationRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  const currentHotelId = activeWorkspace?.id || user?.hotelId || (hotels?.length > 0 ? hotels[0].id : null) || sessionStorage.getItem('fallback_hotel_id');
+  const currentHotel = hotels?.find(h => h.id == currentHotelId) || (hotels?.length > 0 ? hotels[0] : null);
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setShowProfile(false);
-      }
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
       }
@@ -71,7 +70,7 @@ export const Navbar = () => {
       case ROLES.HOUSEKEEPING_STAFF: return 'HK Staff';
       case ROLES.MAINTENANCE_MANAGER: return 'Maint. Manager';
       case ROLES.MAINTENANCE_STAFF: return 'Maint. Staff';
-      default: return 'Manager';
+      default: return 'Hotel Manager';
     }
   };
 
@@ -118,97 +117,55 @@ export const Navbar = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-[#0F172A] text-white border-b border-slate-800 shadow-md">
+      <header className="sticky top-0 z-30 bg-white text-slate-900 border-b border-slate-200 shadow-sm">
         {/* Tier 1: Brand & User Header */}
-        <div className="h-14 px-4 sm:px-8 flex items-center justify-between bg-[#090D16]">
+        <div className="h-14 px-4 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
               onClick={toggleSidebar}
-              className="lg:hidden p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800/60 cursor-pointer"
+              className="lg:hidden p-1.5 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"
               title="Toggle Menu"
             >
               <Menu size={20} />
             </button>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-[#6D4AFF] rounded-lg flex items-center justify-center text-white shadow-sm font-bold">
-                <Hotel size={18} />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="font-extrabold text-sm tracking-wider font-mono text-white">HOTELOGX CONNECT</span>
-                <span className="text-[9px] font-semibold text-purple-400 font-mono tracking-widest uppercase">{getPortalSubtitle(role)}</span>
+            <div className="flex items-center gap-4 pr-6 border-r border-slate-200 hidden sm:flex h-8">
+              <div className="flex flex-col text-left justify-center">
+                <span className="font-serif text-[20px] font-medium leading-none text-slate-900 tracking-tight">Hotelogx</span>
+                <span className="text-[7.5px] font-bold text-slate-400 tracking-[0.2em] uppercase mt-1">Connect</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4 relative">
-            {/* Global Search */}
-            <div className="relative group hidden md:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={14} className="text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-              </div>
-              <input 
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search guests, rooms, tickets... (Press '/')"
-                className="w-48 sm:w-64 md:w-80 h-9 bg-slate-800/50 border border-slate-700/50 text-white text-xs font-medium rounded-lg pl-9 pr-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:bg-slate-800/80 transition-all font-sans"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                <span className="text-[9px] font-mono text-slate-500 font-bold bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/50">/</span>
-              </div>
-
-              {/* Search Results Dropdown */}
-              {searchQuery && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1F2E] border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
-                  {searchResults.length > 0 ? (
-                    <div className="py-2">
-                      {searchResults.map((result, index) => {
-                        const ResultIcon = result.icon;
-                        const isSelected = index === selectedIndex;
-                        return (
-                          <div 
-                            key={result.id}
-                            className={`px-4 py-2 flex items-center justify-between cursor-pointer transition-colors ${isSelected ? 'bg-indigo-500/10' : 'hover:bg-slate-800/50'}`}
-                            onClick={() => handleSelectResult(result)}
-                            onMouseEnter={() => setSelectedIndex(index)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-400'}`}>
-                                <ResultIcon size={14} />
-                              </div>
-                              <div className="flex flex-col text-left">
-                                <span className={`text-xs font-bold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>{result.name}</span>
-                                <span className="text-[10px] text-slate-500 font-medium">{result.subtext}</span>
-                              </div>
-                            </div>
-                            <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest">{result.type}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center">
-                      <p className="text-xs text-slate-400">No matching records found.</p>
-                      <p className="text-[10px] text-slate-500 mt-1">Try searching by room number or name.</p>
-                    </div>
-                  )}
-                </div>
-              )}
+          <div className="flex-1 px-6 hidden md:flex flex-col">
+            <div className="flex items-baseline gap-2">
+              <h2 className="font-bold text-slate-900 text-[13px]">{currentHotel?.name || 'Hotel Mercier'}</h2>
+              <span className="text-slate-400 text-[11px]">{currentHotel?.location || 'Antwerp'} • {currentHotel?.rooms || 48} rooms</span>
             </div>
+            <p className="text-slate-400 text-[11px] mt-0.5">
+              {location.pathname.includes('maintenance') || role === ROLES.MAINTENANCE_MANAGER || role === ROLES.MAINTENANCE_STAFF 
+                ? 'Maintenance tasks' 
+                : location.pathname.includes('housekeeping') || role === ROLES.HOUSEKEEPING_MANAGER || role === ROLES.HOUSEKEEPING_STAFF 
+                ? 'Housekeeping floor plans' 
+                : 'Front office — your shift, prepared'}
+            </p>
+          </div>
 
-            <div className="w-[1px] h-4 bg-slate-700 mx-1 hidden sm:block"></div>
+          <div className="flex items-center gap-4 relative">
+            <div className="hidden sm:flex items-center px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full">
+              <span className="text-[11px] font-semibold text-emerald-700">
+                {getRoleLabel(role)}
+              </span>
+            </div>
 
             {/* Notification Bell with Dropdown Panel */}
             <div className="relative flex" ref={notificationRef}>
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors relative cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative cursor-pointer border border-slate-200"
               >
-                <Bell size={18} />
+                <Bell size={16} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse border border-[#0F172A]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white text-[8px] font-bold text-white flex items-center justify-center">{unreadCount}</span>
                 )}
               </button>
 
@@ -312,53 +269,18 @@ export const Navbar = () => {
               )}
             </div>
 
-            {/* Profile Dropdown */}
-            <div className="relative" ref={profileRef}>
+            {/* Logout Button */}
+            <div className="relative">
               <button 
-                onClick={() => setShowProfile(!showProfile)}
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="flex items-center gap-2 py-1 pl-1 pr-3 rounded-full hover:bg-slate-50 border border-slate-200 transition-colors cursor-pointer bg-white"
               >
-                <div className="w-7 h-7 rounded-md bg-[#6D4AFF] flex items-center justify-center text-white text-xs font-bold font-mono">
+                <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 text-[10px] font-bold font-mono">
                   {userInitials}
                 </div>
-                <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-xs font-bold text-white leading-tight">{userName}</span>
-                  <span className="text-[9px] text-purple-300 font-mono uppercase font-semibold">[{user?.originalRole || getRoleLabel(role)}]</span>
-                </div>
-                <ChevronDown size={14} className="text-slate-400" />
+                <span className="hidden sm:block text-[13px] font-medium text-slate-700">{userName}</span>
+                <LogOut size={13} className="text-slate-400 ml-1" />
               </button>
-
-              {showProfile && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white text-slate-900 rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50">
-                  <div className="p-4 border-b border-slate-100 bg-slate-50">
-                    <p className="font-bold text-sm text-slate-900 truncate">{userName}</p>
-                    <p className="text-xs text-slate-500 font-mono truncate">{user?.email || 'admin@hotelogx.com'}</p>
-                  </div>
-                  
-                  <div className="p-2 space-y-0.5">
-                    <div className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono mt-1">
-                      My Account
-                    </div>
-                    <button onClick={() => navigate('/app/settings')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg text-left font-bold cursor-pointer transition-colors">
-                      <User size={14} className="text-slate-400" /> My Profile
-                    </button>
-                    
-                    {(role === ROLES.HOTEL_ADMIN || role === ROLES.PLATFORM_OPERATOR || role === ROLES.MANAGER) && (
-                      <button onClick={() => navigate('/app/subscription-billing')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg text-left font-bold cursor-pointer transition-colors">
-                        <CreditCard size={14} className="text-slate-400" /> Billing & Usage
-                      </button>
-                    )}
-
-                    <div className="h-[1px] bg-slate-100 my-1" />
-                    <button 
-                      onClick={() => setIsAuthenticated(false)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 rounded-lg text-left font-bold cursor-pointer transition-colors"
-                    >
-                      <LogOut size={14} /> Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -377,6 +299,35 @@ export const Navbar = () => {
           >
             <ArrowLeft size={12} /> Back to Admin
           </button>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4 text-rose-600">
+                <LogOut size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Sign Out</h3>
+              <p className="text-sm text-slate-500">Are you sure you want to sign out of Hotelogx Connect?</p>
+            </div>
+            <div className="flex border-t border-slate-100 bg-slate-50">
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors border-r border-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => setIsAuthenticated(false)}
+                className="flex-1 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

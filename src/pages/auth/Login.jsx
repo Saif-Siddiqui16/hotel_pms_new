@@ -313,7 +313,7 @@ const Login = () => {
       </AnimatePresence>
 
       {/* LEFT SIDE - Project Premium Hotel Photo & Features */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[45%] relative bg-slate-950 flex-col py-10 px-12 xl:px-16 text-white overflow-y-auto overflow-x-hidden">
+      <div className="hidden lg:flex lg:w-[55%] xl:w-[60%] relative bg-slate-950 flex-col py-10 px-12 xl:px-16 text-white overflow-y-auto overflow-x-hidden">
         
         {/* Background Hotel Image */}
         <img 
@@ -393,7 +393,7 @@ const Login = () => {
       </div>
 
       {/* RIGHT SIDE - Sign In Form */}
-      <div className="w-full lg:w-[55%] xl:w-[55%] h-full flex flex-col p-8 sm:p-12 xl:p-16 lg:pl-24 bg-white overflow-y-auto items-start">
+      <div className="w-full lg:w-[45%] xl:w-[40%] h-full flex flex-col p-8 sm:p-12 xl:p-16 lg:pl-24 bg-white overflow-y-auto items-start">
         
         <div className="w-full max-w-[440px] pt-4 lg:pt-8">
           <p className="text-slate-400 text-[11px] font-bold tracking-widest uppercase mb-4">SIGN IN</p>
