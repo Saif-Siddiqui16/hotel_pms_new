@@ -24,6 +24,7 @@ export const AppProvider = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAutoPilot, setIsAutoPilot] = useState(true);
   const [activeWorkspace, setActiveWorkspace] = useState(null); // When Super Admin enters a hotel workspace
+  const [whatsappLogs, setWhatsappLogs] = useState([]); // Dynamic WhatsApp logs
   const [aiSettings, setAiSettings] = useState({
     tone: 'Upscale Assistant',
     detail: 70,
@@ -39,10 +40,10 @@ export const AppProvider = ({ children }) => {
 
   // Persistence Logic
   useEffect(() => {
-    const savedUser = localStorage.getItem('stayflow_user');
-    const savedRole = localStorage.getItem('stayflow_role');
-    const savedAuth = localStorage.getItem('stayflow_auth');
-    const token = localStorage.getItem('autopilot_token');
+    const savedUser = sessionStorage.getItem('stayflow_user');
+    const savedRole = sessionStorage.getItem('stayflow_role');
+    const savedAuth = sessionStorage.getItem('stayflow_auth');
+    const token = sessionStorage.getItem('autopilot_token');
 
     if (savedAuth === 'true' && savedUser) {
       let parsedUser = JSON.parse(savedUser);
@@ -50,11 +51,11 @@ export const AppProvider = ({ children }) => {
 
       if (parsedUser && parsedUser.role === 'Operator') {
         parsedUser.role = ROLES.PLATFORM_OPERATOR;
-        localStorage.setItem('stayflow_user', JSON.stringify(parsedUser));
+        sessionStorage.setItem('stayflow_user', JSON.stringify(parsedUser));
       }
       if (roleVal === 'Operator') {
         roleVal = ROLES.PLATFORM_OPERATOR;
-        localStorage.setItem('stayflow_role', roleVal);
+        sessionStorage.setItem('stayflow_role', roleVal);
       }
 
       setUser(parsedUser);
@@ -71,16 +72,57 @@ export const AppProvider = ({ children }) => {
         .then(data => {
           if (data.success && data.data && data.data.user) {
             const backendUser = data.data.user;
-            const roleMapped = backendUser.role === 'super_admin' || backendUser.role === 'Super Admin' ? ROLES.SUPER_ADMIN : ROLES.PLATFORM_OPERATOR;
-            const updatedUser = { ...backendUser, role: roleMapped };
-            localStorage.setItem('stayflow_user', JSON.stringify(updatedUser));
-            localStorage.setItem('stayflow_role', roleMapped);
+            let roleMapped = ROLES.PLATFORM_OPERATOR;
+            const userRole = backendUser.role;
+
+            if (userRole === 'Super Admin' || userRole === 'super_admin') {
+              roleMapped = ROLES.SUPER_ADMIN;
+            } else if (userRole === 'Hotel Admin') {
+              roleMapped = ROLES.HOTEL_ADMIN;
+            } else if (userRole === 'Manager') {
+              roleMapped = ROLES.MANAGER;
+            } else if (userRole === 'Operator' || userRole === 'platform_operator') {
+              roleMapped = ROLES.PLATFORM_OPERATOR;
+            } else if (userRole === 'Front Desk' || userRole === 'front_office' || userRole === 'Front Office') {
+              roleMapped = ROLES.FRONT_OFFICE;
+            } else if (userRole === 'Housekeeping Manager') {
+              roleMapped = ROLES.HOUSEKEEPING_MANAGER;
+            } else if (userRole === 'Housekeeping Staff' || userRole === 'Housekeeping' || userRole === 'HOUSEKEEPING') {
+              roleMapped = ROLES.HOUSEKEEPING_STAFF;
+            } else if (userRole === 'Maintenance' || userRole === 'Maintenance Manager') {
+              roleMapped = ROLES.MAINTENANCE_MANAGER;
+            } else if (userRole === 'Support Agent') {
+              roleMapped = ROLES.GUEST_ASSISTANT;
+            }
+
+            const updatedUser = { 
+              ...backendUser, 
+              originalRole: backendUser.role,
+              role: roleMapped 
+            };
+            sessionStorage.setItem('stayflow_user', JSON.stringify(updatedUser));
+            sessionStorage.setItem('stayflow_role', roleMapped);
             setUser(updatedUser);
             setRoleState(roleMapped);
             setIsAuthenticatedState(true);
+          } else {
+            sessionStorage.removeItem('autopilot_token');
+            sessionStorage.removeItem('stayflow_auth');
+            sessionStorage.removeItem('stayflow_user');
+            sessionStorage.removeItem('stayflow_role');
+            setUser(null);
+            setIsAuthenticatedState(false);
           }
         })
-        .catch(err => console.warn('Backend reachability issue on init auth me sync:', err))
+        .catch(err => {
+          console.warn('Backend reachability issue on init auth me sync:', err);
+          sessionStorage.removeItem('autopilot_token');
+          sessionStorage.removeItem('stayflow_auth');
+          sessionStorage.removeItem('stayflow_user');
+          sessionStorage.removeItem('stayflow_role');
+          setUser(null);
+          setIsAuthenticatedState(false);
+        })
         .finally(() => setIsInitializing(false));
     } else {
       setIsInitializing(false);
@@ -89,9 +131,9 @@ export const AppProvider = ({ children }) => {
 
   const setIsAuthenticated = (value, userData = null) => {
     if (value && userData) {
-      localStorage.setItem('stayflow_auth', 'true');
-      localStorage.setItem('stayflow_user', JSON.stringify(userData));
-      localStorage.setItem('stayflow_role', userData.role);
+      sessionStorage.setItem('stayflow_auth', 'true');
+      sessionStorage.setItem('stayflow_user', JSON.stringify(userData));
+      sessionStorage.setItem('stayflow_role', userData.role);
       setUser(userData);
       setRoleState(userData.role);
       setIsAuthenticatedState(true);
@@ -99,14 +141,14 @@ export const AppProvider = ({ children }) => {
       fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
         }
       }).catch(err => console.warn('Backend logout sync:', err));
 
-      localStorage.removeItem('autopilot_token');
-      localStorage.removeItem('stayflow_auth');
-      localStorage.removeItem('stayflow_user');
-      localStorage.removeItem('stayflow_role');
+      sessionStorage.removeItem('autopilot_token');
+      sessionStorage.removeItem('stayflow_auth');
+      sessionStorage.removeItem('stayflow_user');
+      sessionStorage.removeItem('stayflow_role');
       setUser(null);
       setIsAuthenticatedState(false);
     }
@@ -114,17 +156,19 @@ export const AppProvider = ({ children }) => {
 
   const setRole = (newRole) => {
     setRoleState(newRole);
-    localStorage.setItem('stayflow_role', newRole);
+    sessionStorage.setItem('stayflow_role', newRole);
   };
 
   // Super Admin workspace impersonation
   const enterWorkspace = (workspace) => {
     setActiveWorkspace(workspace);
+    sessionStorage.setItem('stayflow_active_workspace', JSON.stringify(workspace));
     setRoleState(ROLES.PLATFORM_OPERATOR);
   };
 
   const exitWorkspace = () => {
     setActiveWorkspace(null);
+    sessionStorage.removeItem('stayflow_active_workspace');
     setRoleState(ROLES.SUPER_ADMIN);
   };
   
@@ -140,6 +184,7 @@ export const AppProvider = ({ children }) => {
 
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [staff, setStaff] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [hotels, setHotels] = useState([]);
@@ -160,6 +205,9 @@ export const AppProvider = ({ children }) => {
             isPaused: h.isPaused
           }));
           setHotels(formattedHotels);
+          if (formattedHotels.length > 0) {
+            sessionStorage.setItem('fallback_hotel_id', formattedHotels[0].id.toString());
+          }
         }
       })
       .catch(err => console.error('Failed to fetch hotels for AppContext:', err));
@@ -362,11 +410,11 @@ export const AppProvider = ({ children }) => {
 
   // Fetch platform users from backend when authenticated
   useEffect(() => {
-    const token = localStorage.getItem('autopilot_token');
+    const token = sessionStorage.getItem('autopilot_token');
     if (isAuthenticated && token) {
       fetch(`${API_BASE_URL}/api/auth/users`, {
           credentials: 'include',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}` }
+          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}` }
         })
         .then(res => res.json())
         .then(data => {
@@ -1006,7 +1054,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const deletePlatformUser = async (id) => {
-    const token = localStorage.getItem('autopilot_token');
+    const token = sessionStorage.getItem('autopilot_token');
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
         method: 'DELETE',
@@ -1026,7 +1074,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const updatePlatformUser = async (id, updates) => {
-    const token = localStorage.getItem('autopilot_token');
+    const token = sessionStorage.getItem('autopilot_token');
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
         method: 'PUT',
@@ -1111,6 +1159,16 @@ export const AppProvider = ({ children }) => {
 
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
+  const addWhatsAppLog = (log) => {
+    const newLog = {
+      ...log,
+      id: Date.now() + Math.random(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      source: log.source || 'WhatsApp'
+    };
+    setWhatsappLogs(prev => [newLog, ...prev]);
+  };
+
   // Auto-fetch active hotel subscription when user, activeWorkspace, role, or hotels change
   useEffect(() => {
     if (isAuthenticated) {
@@ -1123,6 +1181,43 @@ export const AppProvider = ({ children }) => {
     }
   }, [isAuthenticated, role, activeWorkspace, user, hotels]);
 
+  // Fetch Dashboard Data (Rooms, Bookings, Tasks, WhatsApp Logs) dynamically
+  useEffect(() => {
+    if (isAuthenticated) {
+      const token = sessionStorage.getItem('autopilot_token');
+      const currentHotelId = activeWorkspace?.id || user?.hotelId || hotels[0]?.id || sessionStorage.getItem('fallback_hotel_id');
+      
+      if (!currentHotelId || currentHotelId === 'undefined' || currentHotelId === 'null') {
+        return; // Wait until a valid hotel ID is resolved
+      }
+
+      const headers = {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        'x-hotel-id': currentHotelId.toString()
+      };
+
+      fetch(`${API_BASE_URL}/api/rooms`, { headers })
+        .then(res => res.json())
+        .then(data => { if (data.success && data.data) setRooms(data.data.rooms || data.data); })
+        .catch(err => console.warn('Failed to fetch rooms:', err));
+
+      fetch(`${API_BASE_URL}/api/bookings`, { headers })
+        .then(res => res.json())
+        .then(data => { if (data.success && data.data) setBookings(data.data.bookings || data.data); })
+        .catch(err => console.warn('Failed to fetch bookings:', err));
+
+      fetch(`${API_BASE_URL}/api/tasks`, { headers })
+        .then(res => res.json())
+        .then(data => { if (data.success && data.data) setTasks(data.data.tasks || data.data); })
+        .catch(err => console.warn('Failed to fetch tasks:', err));
+
+      fetch(`${API_BASE_URL}/api/whatsapp-logs`, { headers })
+        .then(res => res.json())
+        .then(data => { if (data.success && data.data) setWhatsappLogs(data.data.logs || data.data); })
+        .catch(err => console.warn('Failed to fetch whatsapp logs:', err));
+    }
+  }, [isAuthenticated, activeWorkspace, user?.hotelId, hotels]);
+
   return (
     <AppContext.Provider value={{
       role, setRole,
@@ -1133,8 +1228,10 @@ export const AppProvider = ({ children }) => {
       featureToggles, toggleFeatureToggle, toggleAutoPilot,
       toasts, addToast,
       automationLogs, addAutomationLog,
+      whatsappLogs, addWhatsAppLog,
       rooms, updateRoomStatus, assignHousekeeping, markRoomMaintenance,
       bookings, addBooking, updateBooking, deleteBooking, checkInGuest, checkOutGuest,
+      tasks, setTasks,
       staff,
       guests, setGuests, addGuest, updateGuest, deleteGuest,
       loyaltyRules, setLoyaltyRules,

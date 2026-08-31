@@ -12,11 +12,16 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { taskService } from '../services/taskService';
+import { roomService } from '../services/roomService';
+import { userService } from '../services/userService';
 
 export const HousekeepingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setIsAuthenticated } = useApp();
+  const { setIsAuthenticated, user, addWhatsAppLog } = useApp();
+  const roleStr = user?.role?.toLowerCase() || '';
+  const isStaff = !roleStr.includes('manager') && !roleStr.includes('admin');
 
   const handleSignOut = () => {
     setIsAuthenticated(false);
@@ -25,26 +30,46 @@ export const HousekeepingDashboard = () => {
 
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [newTaskData, setNewTaskData] = useState({ title: '', detail: '', room: '', dueBy: '', department: 'Front Office', priority: 'Normal' });
+  const [users, setUsers] = useState([]);
+
+  React.useEffect(() => {
+    const loadUsers = async () => {
+      const fetchedUsers = await userService.getUsers();
+      setUsers(fetchedUsers);
+    };
+    loadUsers();
+  }, []);
 
   const handleNewTask = () => {
     setIsNewTaskModalOpen(true);
   };
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!newTaskData.title || !newTaskData.room) return;
-    const newTask = {
-      id: `task-${Date.now()}`,
-      room: newTaskData.room,
-      title: newTaskData.title,
-      priority: newTaskData.priority,
-      desc: newTaskData.detail || '',
-      meta: `📝 Manual entry · ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} · due ${newTaskData.dueBy || '--:--'} · User`,
-      status: 'Assigned'
-    };
-    
-    setTasksList(prev => [...prev, newTask]);
-    setIsNewTaskModalOpen(false);
-    setNewTaskData({ title: '', detail: '', room: '', dueBy: '', department: 'Front Office', priority: 'Normal' });
+    try {
+      const createdTask = await taskService.createTask({
+        room: newTaskData.room,
+        what: newTaskData.title,
+        priority: newTaskData.priority,
+        detail: newTaskData.detail || '',
+        department: 'Housekeeping',
+        due: newTaskData.dueBy || ''
+      });
+      
+      const formattedTask = {
+        ...createdTask,
+        title: createdTask.what || createdTask.title,
+        desc: createdTask.detail || createdTask.desc,
+        meta: `📝 Manual entry · ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} · due ${newTaskData.dueBy || '--:--'} · User`,
+      };
+      
+      setTasksList(prev => [...prev, formattedTask]);
+      setIsNewTaskModalOpen(false);
+      setNewTaskData({ title: '', detail: '', room: '', dueBy: '', department: 'Housekeeping', priority: 'Normal' });
+    } catch (err) {
+      console.error('Failed to create housekeeping task:', err);
+      alert('Failed to create task');
+    }
   };
 
   // Navigation view read from query params
@@ -52,109 +77,171 @@ export const HousekeepingDashboard = () => {
   const activeView = searchParams.get('tab') || 'dashboard';
 
   // Staff WhatsApp mock selection tab
-  const [activeStaffTab, setActiveStaffTab] = useState('maria'); // 'maria', 'ines'
+  const hkStaff = users.filter(u => u.role === 'Housekeeping Staff');
+  const [activeStaffTab, setActiveStaffTab] = useState('');
+
+  React.useEffect(() => {
+    if (hkStaff.length > 0 && !activeStaffTab) {
+      setActiveStaffTab(hkStaff[0].id.toString());
+    }
+  }, [hkStaff, activeStaffTab]);
 
   // Master Rooms Data List
-  const [roomsList, setRoomsList] = useState([
-    { id: '101', title: 'Room 101', status: 'DND / Occupied', type: 'Stayover', assignedTo: 'unassigned', note: '', subtitleInfo: 'In house · DND active' },
-    { id: '115', title: 'Room 115', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'In house · Alina Popescu' },
-    { id: '118', title: 'Room 118', status: 'Dirty', type: 'Departure', assignedTo: 'unassigned', note: '', subtitleInfo: 'Checked out 09:05 · unassigned' },
-    { id: '121', title: 'Room 121', status: 'Ready', type: 'Departure', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'Checked out · Alina Popescu' },
-    { id: '201', title: 'Room 201', status: 'Cleaning', type: 'Departure', assignedTo: 'Maria Silva', note: '', subtitleInfo: 'Checked out 08:12 · arrival 16:00 · Maria Silva' },
-    { id: '205', title: 'Room 205', status: 'Ready', type: 'Stayover', assignedTo: 'Maria Silva', note: '', subtitleInfo: 'In house · Maria Silva' },
-    { id: '207', title: 'Room 207', status: 'Maintenance', type: 'Departure', assignedTo: 'Maria Silva', note: 'Ceiling stain — leak from 307', subtitleInfo: 'Vacant · arrival 15:00 · Maria Silva' },
-    { id: '208', title: 'Room 208', status: 'Dirty', type: 'Departure', assignedTo: 'Inès Duarte', note: 'Baby cot required', subtitleInfo: 'Vacant · arrival 14:00 · Inès Duarte' },
-    { id: '212', title: 'Room 212', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '', subtitleInfo: 'In house · Kadir Yılmaz' },
-    { id: '216', title: 'Room 216', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '', subtitleInfo: 'In house · Kadir Yılmaz' },
-    { id: '302', title: 'Room 302', status: 'Guest Inside', type: 'Stayover + Linen', assignedTo: 'Inès Duarte', note: 'AC issue open, guest may move to 310', subtitleInfo: 'In house — unhappy · Inès Duarte' },
-    { id: '307', title: 'Room 307', status: 'Maintenance', type: 'VIP Arrival', assignedTo: 'Inès Duarte', note: 'Shower leak — VIP arrival at 14:00', hasIcon: true, subtitleInfo: 'Vacant · arrival 14:00 · Inès Duarte' },
-    { id: '310', title: 'Room 310', status: 'Ready', type: 'Departure', assignedTo: 'Inès Duarte', note: '', subtitleInfo: 'Checked out · Inès Duarte' },
-    { id: '312', title: 'Room 312', status: 'Ready', type: 'Stayover', assignedTo: 'Kadir Yılmaz', note: '', subtitleInfo: 'In house · Kadir Yılmaz' },
-    { id: '401', title: 'Room 401', status: 'Ready', type: 'Departure', assignedTo: 'Maria Silva', note: 'Early arrival 13:00', subtitleInfo: 'Checked out · early arrival 13:00 · Maria Silva' },
-    { id: '405', title: 'Room 405', status: 'Dirty', type: 'Departure', assignedTo: 'Maria Silva', note: '', subtitleInfo: 'Checked out 09:40 · arrival 17:30 · Maria Silva' },
-    { id: '409', title: 'Room 409', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'In house · Alina Popescu' },
-    { id: '411', title: 'Room 411', status: 'Ready', type: 'Stayover', assignedTo: 'Alina Popescu', note: '', subtitleInfo: 'In house · Alina Popescu' }
-  ]);
+  const [roomsList, setRoomsList] = useState([]);
+
+  React.useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const rooms = await roomService.getRooms();
+        setRoomsList(rooms);
+      } catch (err) {
+        console.error('Failed to fetch rooms', err);
+      }
+    };
+    fetchRooms();
+  }, []);
 
   // Master Housekeeping Tasks List
-  const [tasksList, setTasksList] = useState([
-    { id: 'task-1', room: '401', title: 'Priority clean before 13:00 early arrival', priority: 'High', desc: 'Grace Okonkwo arriving 13:00, Deluxe King 401.', meta: '🤖 AI Detection · 07:44 · due 12:45 · Grace Okonkwo · Maria Silva', status: 'Completed' },
-    { id: 'task-2', room: '212', title: '2 extra towels', priority: 'Normal', desc: '', meta: '💬 Guest WhatsApp · 08:53 · Daniel Weiss · Kadir Yılmaz', status: 'Completed' },
-    { id: 'task-3', room: '208', title: 'Baby cot in 208 before 14:00', priority: 'Normal', desc: '', meta: '💬 Guest WhatsApp · 08:11 · due 13:30 · Priya Raghavan · Inès Duarte', status: 'Assigned' }
-  ]);
+  const [tasksList, setTasksList] = useState([]);
+
+  React.useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const allTasks = await taskService.getTasks();
+        let hkTasks = allTasks.filter(t => t.department === 'Housekeeping').map(t => ({
+          ...t,
+          title: t.what || t.title,
+          desc: t.detail || t.desc,
+          meta: `🤖 Backend Sync · ${t.status} · ${t.sendTo}`
+        }));
+        
+        // Filter tasks for regular Housekeeping Staff so they only see tasks assigned to them
+        if (user && isStaff) {
+          hkTasks = hkTasks.filter(t => t.sendTo === user.name);
+        }
+        
+        setTasksList(hkTasks);
+      } catch (err) {
+        console.error('Failed to fetch housekeeping tasks', err);
+      }
+    };
+    fetchTasks();
+  }, []);
 
   // Rooms Filter and Floor Filter States
   const [roomsFilter, setRoomsFilter] = useState('all');
   const [floorFilter, setFloorFilter] = useState('all');
-  // Attendant filter and WhatsApp panel state
   const [attendantFilter, setAttendantFilter] = useState('all');
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
-  const [waStaffTab, setWaStaffTab] = useState('maria');
+  const [waStaffTab, setWaStaffTab] = useState('');
+
+  React.useEffect(() => {
+    if (hkStaff.length > 0 && !waStaffTab) {
+      setWaStaffTab(hkStaff[0].id.toString());
+    }
+  }, [hkStaff, waStaffTab]);
 
   // Action: Start Cleaning Room
-  const handleStartRoom = (id) => {
-    setRoomsList(prev => prev.map(room => {
-      if (room.id === id) {
-        return { ...room, status: 'Cleaning' };
-      }
-      return room;
-    }));
+  const handleStartRoom = async (id) => {
+    try {
+      await roomService.updateRoom(id, { status: 'Cleaning' });
+      setRoomsList(prev => prev.map(room => room.id === id ? { ...room, status: 'Cleaning' } : room));
+    } catch (err) {
+      console.error('Failed to start cleaning room', err);
+    }
   };
 
   // Action: Release Room / Mark Ready
-  const handleReleaseRoom = (id) => {
-    setRoomsList(prev => prev.map(room => {
-      if (room.id === id) {
-        return { ...room, status: 'Ready' };
-      }
-      return room;
-    }));
+  const handleReleaseRoom = async (id) => {
+    try {
+      await roomService.updateRoom(id, { status: 'Ready' });
+      setRoomsList(prev => prev.map(room => room.id === id ? { ...room, status: 'Ready' } : room));
+    } catch (err) {
+      console.error('Failed to release room', err);
+    }
   };
 
   // Action: Mark Dirty
-  const handleMarkDirty = (id) => {
-    setRoomsList(prev => prev.map(room => {
-      if (room.id === id) {
-        return { ...room, status: 'Dirty' };
-      }
-      return room;
-    }));
+  const handleMarkDirty = async (id) => {
+    try {
+      await roomService.updateRoom(id, { status: 'Dirty' });
+      setRoomsList(prev => prev.map(room => room.id === id ? { ...room, status: 'Dirty' } : room));
+    } catch (err) {
+      console.error('Failed to mark room dirty', err);
+    }
   };
 
   // Action: Inspect Room — marks as Inspected (verified clean)
-  const handleInspectRoom = (id) => {
-    setRoomsList(prev => prev.map(room => {
-      if (room.id === id) {
-        return { ...room, status: 'Inspected' };
-      }
-      return room;
-    }));
+  const handleInspectRoom = async (id) => {
+    try {
+      await roomService.updateRoom(id, { status: 'Inspected' });
+      setRoomsList(prev => prev.map(room => room.id === id ? { ...room, status: 'Inspected' } : room));
+    } catch (err) {
+      console.error('Failed to inspect room', err);
+    }
   };
 
   // Action: Toggle DND — stores previous status so Clear DND restores it
-  const handleToggleDnd = (id) => {
-    setRoomsList(prev => prev.map(room => {
-      if (room.id === id) {
-        if (room.status === 'DND / Occupied') {
-          // Restore to previous status or default to Ready
-          return { ...room, status: room.prevStatus || 'Ready', prevStatus: undefined };
-        } else {
-          // Save current status before switching to DND
-          return { ...room, prevStatus: room.status, status: 'DND / Occupied' };
-        }
-      }
-      return room;
-    }));
+  const handleToggleDnd = async (id) => {
+    try {
+      const room = roomsList.find(r => r.id === id);
+      if (!room) return;
+      const newStatus = room.status === 'DND / Occupied' ? (room.prevStatus || 'Ready') : 'DND / Occupied';
+      await roomService.updateRoom(id, { status: newStatus });
+      setRoomsList(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    } catch (err) {
+      console.error('Failed to toggle DND', err);
+    }
   };
 
   // Action: Complete Task
-  const handleCompleteTask = (taskId) => {
-    setTasksList(prev => prev.map(task => {
-      if (task.id === taskId) {
-        return { ...task, status: 'Completed' };
+  const handleCompleteTask = async (taskId) => {
+    try {
+      const updated = await taskService.updateTask(taskId, { status: 'Completed' });
+      if (updated) {
+        setTasksList(prev => prev.map(task => task.id === taskId ? { ...task, status: 'Completed' } : task));
       }
-      return task;
-    }));
+    } catch (err) {
+      console.error('Failed to complete task', err);
+    }
+  };
+
+  const handleAcceptTask = async (taskId) => {
+    try {
+      const updated = await taskService.updateTask(taskId, { status: 'In Progress' });
+      if (updated) {
+        setTasksList(prev => prev.map(task => task.id === taskId ? { ...task, status: 'In Progress' } : task));
+      }
+    } catch (err) {
+      console.error('Failed to accept task', err);
+    }
+  };
+
+  const handleRejectTask = async (taskId) => {
+    try {
+      const updated = await taskService.updateTask(taskId, { status: 'New', sendTo: null });
+      if (updated) {
+        // If staff rejects, it's no longer assigned to them, so we can remove it from their view or update it
+        setTasksList(prev => prev.filter(task => task.id !== taskId));
+      }
+    } catch (err) {
+      console.error('Failed to reject task', err);
+    }
+  };
+
+  const handleAssignTask = async (taskId, assigneeName) => {
+    try {
+      const isAssigned = assigneeName && assigneeName !== 'Leave unassigned';
+      const updated = await taskService.updateTask(taskId, {
+        sendTo: assigneeName,
+        status: isAssigned ? 'Assigned' : 'New'
+      });
+      if (updated) {
+        setTasksList(prev => prev.map(t => t.id === taskId ? { ...t, status: updated.status, sendTo: updated.sendTo, meta: `🤖 Backend Sync · ${updated.status} · ${updated.sendTo}` } : t));
+      }
+    } catch (err) {
+      console.error('Failed to assign task', err);
+    }
   };
 
   // Compute dynamic KPI stats for cards row
@@ -165,11 +252,12 @@ export const HousekeepingDashboard = () => {
     const ready = roomsList.filter(r => r.status === 'Ready' || r.status === 'Inspected').length;
     const dnd = roomsList.filter(r => r.status === 'DND / Occupied' || r.status === 'Guest Inside').length;
     const maintenance = roomsList.filter(r => r.status === 'Maintenance').length;
-    const vip = roomsList.filter(r => r.type.includes('VIP')).length;
-    const early = roomsList.filter(r => r.note.includes('Early') || r.note.includes('arrival 14:00') || r.note.includes('arrival 15:00')).length;
-    const departures = roomsList.filter(r => r.type.includes('Departure')).length;
+    const vip = roomsList.filter(r => r.type && r.type.includes('VIP')).length;
+    const early = roomsList.filter(r => r.note && (r.note.includes('Early') || r.note.includes('arrival 14:00') || r.note.includes('arrival 15:00'))).length;
+    const departures = roomsList.filter(r => r.type && r.type.includes('Departure')).length;
+    const late = roomsList.filter(r => r.note && (r.note.includes('Late') || r.note.toLowerCase().includes('priority'))).length;
 
-    return { toClean, cleaning, ready, dnd, maintenance, vip, early, departures };
+    return { toClean, cleaning, ready, dnd, maintenance, vip, early, departures, late };
   };
 
   const kpis = getKpiCounts();
@@ -198,17 +286,31 @@ export const HousekeepingDashboard = () => {
 
   // Get Priority rooms specifically for Dashboard view (fixed subset)
   const getPriorityRooms = () => {
-    const prioritySubset = ['307', '208', '207', '302', '201', '405'];
-    return prioritySubset
-      .map(id => roomsList.find(r => r.id === id))
-      .filter(Boolean);
+    // Dynamic priority: rooms that are Dirty or Cleaning, sorted to surface priority ones first
+    const activeRooms = roomsList.filter(r => r.status !== 'Ready' && r.status !== 'Inspected');
+    return activeRooms.slice(0, 6);
+  };
+
+  const getNextRoomForStaff = (staffName) => {
+    if (!staffName) return null;
+    const assigned = roomsList.filter(r => r.assignedTo === staffName);
+    // Find next room that needs attention, or fallback to their first assigned room
+    return assigned.find(r => r.status !== 'Ready' && r.status !== 'Inspected') || assigned[0];
   };
 
   // Compute Task KPIs
   const getTaskKpis = () => {
     const openTasks = tasksList.filter(t => t.status !== 'Completed').length;
     const completedTasks = tasksList.filter(t => t.status === 'Completed').length;
-    return { openTasks, completedTasks };
+    const unassignedTasks = tasksList.filter(t => !t.sendTo || t.sendTo === 'Leave unassigned' || t.status === 'New').length;
+    const fromGuestTasks = tasksList.filter(t => {
+      const isGuest = t.source === 'guest' || t.source === 'Guest' || 
+                      (t.desc && t.desc.toLowerCase().includes('guest')) || 
+                      (t.title && t.title.toLowerCase().includes('guest')) ||
+                      (t.meta && t.meta.toLowerCase().includes('guest'));
+      return isGuest;
+    }).length;
+    return { openTasks, completedTasks, unassignedTasks, fromGuestTasks };
   };
 
   const taskKpis = getTaskKpis();
@@ -258,7 +360,7 @@ export const HousekeepingDashboard = () => {
             {/* Main Dashboard Intro */}
             <div className="space-y-1.5 text-left select-none">
               <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">GOOD AFTERNOON, ROSA</span>
-              <h2 className="text-2xl font-bold text-slate-955 tracking-tight font-serif">{kpis.ready} of 18 rooms released.</h2>
+              <h2 className="text-2xl font-bold text-slate-955 tracking-tight font-serif">{kpis.ready} of {roomsList.length} rooms released.</h2>
               <p className="text-xs text-slate-505 max-w-2xl font-medium leading-relaxed font-sans">
                 Your team never has to open this. Everything here arrives from the buttons they tap on WhatsApp.
               </p>
@@ -326,7 +428,7 @@ export const HousekeepingDashboard = () => {
                   </span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-red-650 leading-none block font-serif">2</span>
+                  <span className="text-2xl font-bold text-red-650 leading-none block font-serif">{kpis.late}</span>
                   <span className="text-[10px] text-red-500/85 font-bold font-sans block leading-tight">arrival before the room</span>
                 </div>
               </div>
@@ -506,129 +608,83 @@ export const HousekeepingDashboard = () => {
                 </div>
 
                 {/* Staff selection tab switcher */}
-                <div className="flex gap-2 select-none shrink-0 font-sans">
-                  <button 
-                    onClick={() => setActiveStaffTab('maria')}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                      activeStaffTab === 'maria' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-650'
-                    }`}
-                  >
-                    Maria
-                  </button>
-                  <button 
-                    onClick={() => setActiveStaffTab('ines')}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                      activeStaffTab === 'ines' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-655'
-                    }`}
-                  >
-                    Inês
-                  </button>
+                <div className="flex gap-2 select-none shrink-0 font-sans flex-wrap">
+                  {hkStaff.map(staff => (
+                    <button 
+                      key={staff.id}
+                      onClick={() => setActiveStaffTab(staff.id.toString())}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        activeStaffTab === staff.id.toString() ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-650'
+                      }`}
+                    >
+                      {staff.name.split(' ')[0]}
+                    </button>
+                  ))}
+                  {hkStaff.length === 0 && <span className="text-xs text-slate-400">No staff found</span>}
                 </div>
 
                 {/* Phone Mockup Frame */}
                 <div className="border border-[#E7E4DD] rounded-2xl overflow-hidden flex flex-col flex-1 shadow-sm">
                   
                   {/* Chat header */}
-                  <div className="bg-white p-3 border-b border-[#E7E4DD] flex justify-between items-center select-none font-sans">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-[#EBF6EE] rounded-lg flex items-center justify-center text-[#105F39] shrink-0 font-mono font-bold text-xs">
-                        {activeStaffTab === 'maria' ? 'MS' : 'ID'}
+                  {(() => {
+                    const activeStaff = hkStaff.find(s => s.id.toString() === activeStaffTab) || hkStaff[0];
+                    if (!activeStaff) return null;
+                    const initials = activeStaff.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    
+                    return (
+                      <div className="bg-white p-3 border-b border-[#E7E4DD] flex justify-between items-center select-none font-sans">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 bg-[#EBF6EE] rounded-lg flex items-center justify-center text-[#105F39] shrink-0 font-mono font-bold text-xs">
+                            {initials}
+                          </div>
+                          <div className="text-left space-y-0.5">
+                            <p className="text-xs font-bold text-slate-900">
+                              {activeStaff.name}
+                            </p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono leading-none">
+                              {activeStaff.phoneNumber || 'No Phone'} · Attendant
+                            </p>
+                          </div>
+                        </div>
+                        <button className="text-slate-455 hover:text-slate-600 cursor-pointer">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="text-left space-y-0.5">
-                        <p className="text-xs font-bold text-slate-900">
-                          {activeStaffTab === 'maria' ? 'Maria Silva' : 'Inês Duarte'}
-                        </p>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono leading-none">
-                          {activeStaffTab === 'maria' ? '+32 468 22 74 91 · Attendant · Fl. 2 & 4' : '+32 468 11 99 22 · Supervisor · All Fl.'}
-                        </p>
-                      </div>
-                    </div>
-                    <button className="text-slate-455 hover:text-slate-600 cursor-pointer">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </button>
-                  </div>
+                    );
+                  })()}
 
                   {/* Chat window body preview */}
-                  <div className="bg-[#efeae2] p-4 flex-1 overflow-y-auto min-h-[220px] flex flex-col justify-start">
+                  {(() => {
+                    const activeStaff = hkStaff.find(s => s.id.toString() === activeStaffTab) || hkStaff[0];
+                    if (!activeStaff) return null;
+                    const nextRoom = getNextRoomForStaff(activeStaff.name);
                     
-                    <div className="bg-white rounded-2xl shadow-xs overflow-hidden max-w-[85%] text-left space-y-1.5 select-none font-sans">
-                      <div className="p-4 pb-2 space-y-1.5">
-                        {activeStaffTab === 'maria' ? (
-                          <div className="space-y-1.5 text-xs text-slate-800 leading-normal font-semibold font-sans">
-                            <p>Next room: 405 — Departure, arrival 17:30.</p>
-                            <p className="text-[9px] text-slate-400 font-bold text-right font-mono mt-1">15:02</p>
+                    return (
+                      <div className="bg-[#efeae2] p-4 flex-1 overflow-y-auto min-h-[220px] flex flex-col justify-start">
+                        {nextRoom ? (
+                          <div className="bg-white rounded-2xl shadow-xs overflow-hidden max-w-[85%] text-left space-y-1.5 select-none font-sans">
+                            <div className="p-4 pb-2 space-y-1.5">
+                              <div className="space-y-1.5 text-xs text-slate-800 leading-normal font-semibold font-sans">
+                                <p>Next room: {nextRoom.id} - {nextRoom.type}</p>
+                                <p className="text-[9px] text-slate-400 font-bold text-right font-mono mt-1">Now</p>
+                              </div>
+                            </div>
+                            <div className="border-t border-slate-100 divide-y divide-slate-100 flex flex-col font-sans">
+                              <button onClick={() => handleStartRoom(nextRoom.id)} className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors">Start Cleaning</button>
+                              <button onClick={() => setRoomsList(prev => prev.map(r => r.id === nextRoom.id ? { ...r, status: 'Guest Inside' } : r))} className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors">Guest Inside</button>
+                              <button onClick={() => handleToggleDnd(nextRoom.id)} className="w-full text-center py-2.5 text-xs font-bold text-sky-655 hover:bg-slate-50 cursor-pointer transition-colors">DND</button>
+                              <button onClick={() => setRoomsList(prev => prev.map(r => r.id === nextRoom.id ? { ...r, status: 'Maintenance' } : r))} className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors">Maintenance Issue</button>
+                            </div>
                           </div>
                         ) : (
-                          <div className="space-y-1.5 text-xs text-slate-800 leading-normal font-semibold font-sans">
-                            <p>Next room: 307 — VIP Arrival, arrival 14:00.</p>
-                            <p className="text-[9px] text-slate-400 font-bold text-right font-mono mt-1">13:48</p>
-                          </div>
+                          <div className="text-center text-slate-500 text-xs mt-10">No rooms assigned.</div>
                         )}
                       </div>
-
-                      {/* Interactive mock button list links */}
-                      <div className="border-t border-slate-100 divide-y divide-slate-100 flex flex-col font-sans">
-                        {activeStaffTab === 'maria' ? (
-                          <>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: Start Cleaning 405'); handleStartRoom('405'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              Start Cleaning
-                            </button>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: Guest Inside Room 405'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              Guest Inside
-                            </button>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: DND Room 405'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-655 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              DND
-                            </button>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: Maintenance Issue Room 405'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              Maintenance Issue
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: Start Cleaning 307'); handleStartRoom('307'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              Start Cleaning
-                            </button>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: Guest Inside Room 307'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-655 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              Guest Inside
-                            </button>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: DND Room 307'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              DND
-                            </button>
-                            <button 
-                              onClick={() => { alert('WhatsApp Action: Maintenance Issue Room 307'); }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              Maintenance Issue
-                            </button>
-                          </>
-                        )}
-                      </div>
-
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                 </div>
 
@@ -649,67 +705,29 @@ export const HousekeepingDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
-                
-                {/* Card 1: Maria Silva */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-                  <div className="space-y-0.5">
-                    <h4 className="text-xs font-bold text-slate-900">Maria Silva</h4>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">2/5 released</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['201', '205', '207', '401', '405'].map((room) => (
-                      <span key={room} className="px-2 py-0.5 bg-slate-50 border border-slate-200/80 rounded-md text-[10px] font-bold text-slate-550 font-mono">
-                        {room}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card 2: Inês Duarte */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-                  <div className="space-y-0.5">
-                    <h4 className="text-xs font-bold text-slate-900">Inès Duarte</h4>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">0/4 released</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['208', '302', '307', '310'].map((room) => (
-                      <span key={room} className="px-2 py-0.5 bg-slate-50 border border-slate-200/80 rounded-md text-[10px] font-bold text-slate-550 font-mono">
-                        {room}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card 3: Kadir Yılmaz */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-                  <div className="space-y-0.5">
-                    <h4 className="text-xs font-bold text-slate-900">Kadir Yılmaz</h4>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">1/3 released</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['212', '216', '312'].map((room) => (
-                      <span key={room} className="px-2 py-0.5 bg-slate-50 border border-slate-200/80 rounded-md text-[10px] font-bold text-slate-550 font-mono">
-                        {room}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card 4: Alina Popescu */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-                  <div className="space-y-0.5">
-                    <h4 className="text-xs font-bold text-slate-900">Alina Popescu</h4>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">3/5 released</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['115', '118', '121', '409', '411'].map((room) => (
-                      <span key={room} className="px-2 py-0.5 bg-slate-50 border border-slate-200/80 rounded-md text-[10px] font-bold text-slate-550 font-mono">
-                        {room}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
+                {hkStaff.length > 0 ? hkStaff.map(staff => {
+                  const assignedRooms = roomsList.filter(r => r.assignedTo === staff.name);
+                  const released = assignedRooms.filter(r => r.status === 'Ready' || r.status === 'Inspected').length;
+                  return (
+                    <div key={staff.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
+                      <div className="space-y-0.5">
+                        <h4 className="text-xs font-bold text-slate-900">{staff.name}</h4>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">{released}/{assignedRooms.length || 5} released</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {assignedRooms.length > 0 ? assignedRooms.map((room) => (
+                          <span key={room.id} className="px-2 py-0.5 bg-slate-50 border border-slate-200/80 rounded-md text-[10px] font-bold text-slate-550 font-mono">
+                            {room.id}
+                          </span>
+                        )) : (
+                          <span className="text-slate-400 text-xs italic">None</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <div className="col-span-full py-8 text-center text-slate-500 text-sm">No housekeeping staff found. Add them in Users Management.</div>
+                )}
               </div>
             </div>
 
@@ -743,7 +761,6 @@ export const HousekeepingDashboard = () => {
                     Assigned
                   </span>
                 </div>
-
               </div>
             </div>
 
@@ -819,15 +836,23 @@ export const HousekeepingDashboard = () => {
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-sans select-none border-b border-[#E7E4DD] pb-4 mt-5">
                   {/* Attendants */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    {['all', 'maria', 'ines', 'kadir', 'alina'].map(att => (
+                    <button
+                      onClick={() => setAttendantFilter('all')}
+                      className={`text-xs font-bold cursor-pointer transition-colors ${
+                        attendantFilter === 'all' ? 'text-slate-900 underline decoration-2 underline-offset-4' : 'text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      All attendants
+                    </button>
+                    {hkStaff.map(staff => (
                       <button
-                        key={att}
-                        onClick={() => setAttendantFilter(att)}
+                        key={staff.id}
+                        onClick={() => setAttendantFilter(staff.id.toString())}
                         className={`text-xs font-bold cursor-pointer transition-colors ${
-                          attendantFilter === att ? 'text-slate-900 underline decoration-2 underline-offset-4' : 'text-slate-400 hover:text-slate-700'
+                          attendantFilter === staff.id.toString() ? 'text-slate-900 underline decoration-2 underline-offset-4' : 'text-slate-400 hover:text-slate-700'
                         }`}
                       >
-                        {att === 'all' ? 'All attendants' : att === 'maria' ? 'Maria' : att === 'ines' ? 'Inès' : att === 'kadir' ? 'Kadir' : 'Alina'}
+                        {staff.name.split(' ')[0]}
                       </button>
                     ))}
                   </div>
@@ -864,8 +889,10 @@ export const HousekeepingDashboard = () => {
                     else if (roomsFilter === 'maintenance') result = result.filter(r => r.status === 'Maintenance');
                     // Attendant filter
                     if (attendantFilter !== 'all') {
-                      const nameMap = { maria: 'Maria Silva', ines: 'Inès Duarte', kadir: 'Kadir Yılmaz', alina: 'Alina Popescu' };
-                      result = result.filter(r => r.assignedTo === nameMap[attendantFilter]);
+                      const selectedStaff = hkStaff.find(s => s.id.toString() === attendantFilter);
+                      if (selectedStaff) {
+                        result = result.filter(r => r.assignedTo === selectedStaff.name);
+                      }
                     }
                     // Floor filter
                     if (floorFilter !== 'all') result = result.filter(r => r.id.startsWith(floorFilter));
@@ -1052,81 +1079,104 @@ export const HousekeepingDashboard = () => {
                 </div>
 
                 {/* Staff tab switcher */}
-                <div className="flex gap-2 p-4 border-b border-[#E7E4DD] font-sans">
-                  {[
-                    { key: 'maria', label: 'Maria' },
-                    { key: 'ines', label: 'Inès' },
-                    { key: 'kadir', label: 'Kadir' },
-                    { key: 'alina', label: 'Alina' },
-                  ].map(s => (
+                <div className="flex gap-2 p-4 border-b border-[#E7E4DD] font-sans flex-wrap">
+                  {hkStaff.map(s => (
                     <button
-                      key={s.key}
-                      onClick={() => setWaStaffTab(s.key)}
+                      key={s.id}
+                      onClick={() => setWaStaffTab(s.id.toString())}
                       className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                        waStaffTab === s.key ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-650'
+                        waStaffTab === s.id.toString() ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-650'
                       }`}
                     >
-                      {s.label}
+                      {s.name.split(' ')[0]}
                     </button>
                   ))}
+                  {hkStaff.length === 0 && <span className="text-xs text-slate-400">No staff</span>}
                 </div>
 
-                {/* Chat area */}
-                <div className="flex flex-col flex-1">
-                  {/* Chat header */}
-                  <div className="bg-white px-4 py-3 border-b border-[#E7E4DD] flex items-center gap-2.5 font-sans">
-                    <div className="w-8 h-8 bg-[#EBF6EE] rounded-lg flex items-center justify-center text-[#105F39] font-bold text-xs shrink-0">
-                      {waStaffTab === 'maria' ? 'MS' : waStaffTab === 'ines' ? 'ID' : waStaffTab === 'kadir' ? 'KY' : 'AP'}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">
-                        {waStaffTab === 'maria' ? 'Maria Silva' : waStaffTab === 'ines' ? 'Inès Duarte' : waStaffTab === 'kadir' ? 'Kadir Yılmaz' : 'Alina Popescu'}
-                      </p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                        {waStaffTab === 'maria' ? 'Fl. 2 & 4' : waStaffTab === 'ines' ? 'Fl. 3 · Supervisor' : waStaffTab === 'kadir' ? 'Fl. 2' : 'Fl. 1'}
-                      </p>
-                    </div>
-                  </div>
+                  {/* Chat area */}
+                  <div className="flex flex-col flex-1">
+                    {(() => {
+                      const selected = hkStaff.find(s => s.id.toString() === waStaffTab) || hkStaff[0];
+                      if (!selected) return null;
+                      const initials = selected.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                      const nextRoom = getNextRoomForStaff(selected.name);
 
-                  {/* Chat messages */}
-                  <div className="bg-[#efeae2] flex-1 p-4 space-y-3 overflow-y-auto min-h-[200px]">
-                    {/* System message */}
-                    <div className="bg-white rounded-2xl shadow-xs overflow-hidden max-w-[90%] font-sans">
-                      <div className="p-3.5 pb-2 space-y-1">
-                        <p className="text-xs text-slate-800 font-semibold leading-normal">
-                          {waStaffTab === 'maria' && 'Next room: 405 — Departure, arrival 17:30.'}
-                          {waStaffTab === 'ines' && 'Next room: 307 — VIP Arrival at 14:00.'}
-                          {waStaffTab === 'kadir' && 'Next room: 212 — Stayover linen change.'}
-                          {waStaffTab === 'alina' && 'Next room: 115 — Stayover, in house.'}
-                        </p>
-                        <p className="text-[9px] text-slate-400 font-bold text-right font-mono">
-                          {waStaffTab === 'maria' ? '15:02' : waStaffTab === 'ines' ? '13:48' : waStaffTab === 'kadir' ? '14:15' : '11:30'}
-                        </p>
-                      </div>
-                      {/* WhatsApp action buttons */}
-                      <div className="border-t border-slate-100 divide-y divide-slate-100 flex flex-col">
-                        {['Cleaning', 'Clean', 'Inspected', 'Guest Inside', 'Maintenance'].map(action => {
-                          const roomId = waStaffTab === 'maria' ? '405' : waStaffTab === 'ines' ? '307' : waStaffTab === 'kadir' ? '212' : '115';
-                          return (
-                            <button
-                              key={action}
-                              onClick={() => {
-                                if (action === 'Cleaning') handleStartRoom(roomId);
-                                else if (action === 'Clean') handleReleaseRoom(roomId);
-                                else if (action === 'Inspected') handleInspectRoom(roomId);
-                                else if (action === 'Guest Inside') setRoomsList(prev => prev.map(r => r.id === roomId ? { ...r, status: 'Guest Inside' } : r));
-                                else if (action === 'Maintenance') setRoomsList(prev => prev.map(r => r.id === roomId ? { ...r, status: 'Maintenance' } : r));
-                              }}
-                              className="w-full text-center py-2.5 text-xs font-bold text-[#0a7cff] hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              {action}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                      return (
+                        <>
+                          {/* Chat header */}
+                          <div className="bg-white px-4 py-3 border-b border-[#E7E4DD] flex items-center gap-2.5 font-sans">
+                            <div className="w-8 h-8 bg-[#EBF6EE] rounded-lg flex items-center justify-center text-[#105F39] font-bold text-xs shrink-0">
+                              {initials}
+                            </div>
+                            <div>
+                              <p className="text-[13px] font-bold text-slate-900 leading-tight">{selected.name}</p>
+                              <p className="text-[10px] text-[#105F39] font-semibold">Online</p>
+                            </div>
+                          </div>
+
+                          <div className="bg-[#efeae2] flex-1 p-4 space-y-3 overflow-y-auto min-h-[200px]">
+                            {/* System message */}
+                            {nextRoom ? (
+                              <div className="bg-white rounded-2xl shadow-xs overflow-hidden max-w-[90%] font-sans">
+                                <div className="p-3.5 pb-2 space-y-1">
+                                  <p className="text-xs text-slate-800 font-semibold leading-normal">
+                                    Next room: {nextRoom.id} - {nextRoom.type}
+                                  </p>
+                                  <p className="text-[9px] text-slate-400 font-bold text-right font-mono">
+                                    Now
+                                  </p>
+                                </div>
+                                {/* WhatsApp action buttons */}
+                                <div className="border-t border-slate-100 divide-y divide-slate-100 flex flex-col">
+                                  {['Cleaning', 'Clean', 'Inspected', 'Guest Inside', 'Maintenance'].map(action => {
+                                    const roomId = nextRoom.id;
+                                    return (
+                                      <button
+                                        key={action}
+                                        onClick={() => {
+                                          let logMessage = '';
+                                          if (action === 'Cleaning') {
+                                            handleStartRoom(roomId);
+                                            logMessage = `${waStaffTab || 'Staff'} replied "Cleaning" for room ${roomId}`;
+                                          }
+                                          else if (action === 'Clean') {
+                                            handleReleaseRoom(roomId);
+                                            logMessage = `${waStaffTab || 'Staff'} marked ${roomId} as Clean`;
+                                          }
+                                          else if (action === 'Inspected') {
+                                            handleInspectRoom(roomId);
+                                            logMessage = `${waStaffTab || 'Staff'} marked ${roomId} as Inspected`;
+                                          }
+                                          else if (action === 'Guest Inside') {
+                                            setRoomsList(prev => prev.map(r => r.id === roomId ? { ...r, status: 'Guest Inside' } : r));
+                                            logMessage = `${waStaffTab || 'Staff'} reported DND / Guest Inside on ${roomId}`;
+                                          }
+                                          else if (action === 'Maintenance') {
+                                            setRoomsList(prev => prev.map(r => r.id === roomId ? { ...r, status: 'Maintenance' } : r));
+                                            logMessage = `${waStaffTab || 'Staff'} reported Maintenance issue on ${roomId}`;
+                                          }
+                                          
+                                          if (logMessage && typeof addWhatsAppLog === 'function') {
+                                            addWhatsAppLog({ text: logMessage, source: 'WhatsApp', icon: '📱' });
+                                          }
+                                        }}
+                                        className="w-full text-center py-2.5 text-xs font-bold text-[#0a7cff] hover:bg-slate-50 cursor-pointer transition-colors"
+                                      >
+                                        {action}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center text-slate-500 text-xs mt-10">No rooms assigned.</div>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                </div>
 
                 <p className="p-4 text-[10px] text-slate-400 leading-relaxed font-semibold font-sans border-t border-[#E7E4DD]">
                   Interactive buttons, lists and Flows are sent from your WhatsApp Business number. Staff never open the dashboard to update a room.
@@ -1150,13 +1200,15 @@ export const HousekeepingDashboard = () => {
                   Towels, cots, extra pillows and turndowns arrive here the moment a guest asks — in any language, on any channel.
                 </p>
               </div>
-              <button 
-                onClick={handleNewTask}
-                className="px-5 py-2.5 bg-[#0F5132] hover:bg-[#0b4227] text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0 font-sans flex items-center gap-1.5"
-              >
-                <Plus size={14} />
-                <span>New task</span>
-              </button>
+              {!isStaff && (
+                <button
+                  onClick={handleNewTask}
+                  className="flex items-center gap-2 bg-[#105F39] hover:bg-[#0b4227] text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-[#105F39]/20 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                >
+                  <Plus size={16} />
+                  <span>New task</span>
+                </button>
+              )}
             </div>
 
             {/* 4 Task KPI Cards Row */}
@@ -1172,7 +1224,7 @@ export const HousekeepingDashboard = () => {
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[100px] flex flex-col justify-between">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">Unassigned</span>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">0</span>
+                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.unassignedTasks}</span>
                   <span className="text-[10px] text-slate-400 font-bold block leading-none">nobody has it yet</span>
                 </div>
               </div>
@@ -1187,7 +1239,7 @@ export const HousekeepingDashboard = () => {
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[100px] flex flex-col justify-between">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">From guests</span>
                 <div className="mt-2">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">2</span>
+                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.fromGuestTasks}</span>
                 </div>
               </div>
 
@@ -1229,14 +1281,34 @@ export const HousekeepingDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Status Badge clickable action to trigger completion */}
-                    <div className="shrink-0 font-sans cursor-pointer" onClick={() => handleCompleteTask(task.id)}>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${
-                        isCompleted ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-505'}`} />
-                        {task.status}
-                      </span>
+                    <div className="shrink-0 font-sans flex flex-col items-end gap-2">
+                      <div className="flex flex-col gap-1.5 items-end">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${
+                          isCompleted ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                          {task.status}
+                        </span>
+
+                        {!isStaff && !isCompleted && (
+                          <button onClick={() => handleCompleteTask(task.id)} className="text-[10px] text-slate-400 hover:text-emerald-600 font-bold underline cursor-pointer">
+                            Force Complete
+                          </button>
+                        )}
+                      </div>
+
+                      {!isStaff && !isCompleted && (
+                        <select
+                          value={task.sendTo || 'Leave unassigned'}
+                          onChange={(e) => handleAssignTask(task.id, e.target.value)}
+                          className="px-2 py-1 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 bg-white shadow-xs focus:outline-none cursor-pointer"
+                        >
+                          <option value="Leave unassigned">Assign to...</option>
+                          {hkStaff.map(u => (
+                            <option key={u.id} value={u.name}>{u.name}</option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                   </div>

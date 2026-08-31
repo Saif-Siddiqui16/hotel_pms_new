@@ -16,6 +16,8 @@ import {
   X
 } from 'lucide-react';
 import { useApp, ROLES } from '../context/AppContext';
+import { userService } from '../services/userService';
+import { taskService } from '../services/taskService';
 
 // =========================================================================
 // VIEW A: FRONT OFFICE TASKS VIEW (matching reference image)
@@ -29,82 +31,29 @@ const FrontOfficeTasksView = () => {
     room: '',
     due: '',
     department: 'Front Office',
-    priority: 'Normal',
-    sendTo: 'Leave unassigned'
+    priority: 'Normal'
   });
 
-  const [deskTasks, setDeskTasks] = useState([
-    {
-      id: 'FO-205',
-      room: '205',
-      title: 'Late checkout 15:00 — decision needed',
-      tags: ['Normal', 'Front Office'],
-      desc: 'Guest asked for 15:00. 24 arrivals today; 205 is needed for a 15:00 check-in.',
-      meta: '💬 Guest WhatsApp · 09:19 · 📅 due 10:30 · Hendrik Vos · Amélie Duprez',
-      status: 'New',
-      filter: 'mine'
-    },
-    {
-      id: 'FO-397',
-      room: '397',
-      title: 'VIP preparation — 307',
-      tags: ['High', 'VIP'],
-      desc: 'Still water, fruit plate, high floor away from lift. Confirm 20:00 table at De Kleine Zavel.',
-      meta: '📋 PMS event · 07:15 · 📅 due 13:30 · Yuki Tanabe · Amélie Duprez',
-      status: 'In Progress',
-      filter: 'mine'
-    },
-    {
-      id: 'FO-411',
-      room: '411',
-      title: 'Approve €47.60 credit note',
-      tags: ['High', 'Billing'],
-      desc: 'Duplicate city tax €10.60 and minibar €26.40 posted to wrong room. Folio MRC-47988.',
-      meta: '✉️ Guest Email · 08:05 · 📅 due 17:00 · Nadia Haddad · Jonas Verhaeghe',
-      status: 'Escalated',
-      filter: 'mine'
-    },
-    {
-      id: 'FO-115',
-      room: '115',
-      title: 'Post laptop charger to guest',
-      tags: ['Low', 'Follow-up'],
-      desc: 'Black 65W charger from 115, logged 12 Aug. Waiting for the address.',
-      meta: '✉️ Guest Email · yesterday 18:33 · Lars Bakke · Thibault Mertens',
-      status: 'Waiting',
-      filter: 'mine'
-    },
-    {
-      id: 'FO-212',
-      room: '212',
-      title: 'Taxi to Antwerpen-Centraal, 15:45',
-      tags: ['Normal', 'Front Office'],
-      desc: 'Guest asked for 15:45.',
-      meta: '💬 Guest WhatsApp · 09:12 · 📅 due 15:30 · Daniel Weiss · Unassigned',
-      status: 'New',
-      filter: 'guests'
-    },
-    {
-      id: 'FO-298',
-      room: '298',
-      title: 'Missing payment — card declined on 208',
-      tags: ['High', 'Front Office'],
-      desc: 'Pre-authorisation failed twice. Request new card at check-in.',
-      meta: '📋 PMS event · 06:40 · 📅 due 14:00 · Priya Raghavan · Amélie Duprez',
-      status: 'Assigned',
-      filter: 'open'
-    },
-    {
-      id: 'FO-392',
-      room: '392',
-      title: 'Room move request — 302 to 310',
-      tags: ['High', 'Front Office'],
-      desc: 'Pending manager decision on compensation vs upgrade.',
-      meta: '🤖 AI Detection · 09:53 · Clara Bertrand · Jonas Verhaeghe',
-      status: 'Escalated',
-      filter: 'open'
-    },
-  ]);
+  const [deskTasks, setDeskTasks] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      const fetchedUsers = await userService.getUsers();
+      setUsers(fetchedUsers);
+      
+      const fetchedTasks = await taskService.getTasks();
+      // Map API tasks to match FrontOffice structure if necessary, or just use them
+      // In FrontOffice, it uses tags array for priority and department
+      const formattedTasks = fetchedTasks.map(t => ({
+        ...t,
+        tags: [t.priority, t.department],
+        filter: 'mine' // Default to mine for now, can be updated with real logic
+      }));
+      setDeskTasks(formattedTasks);
+    };
+    loadData();
+  }, []);
 
   const statusUpdates = [
     { room: '401', title: 'Priority clean before 13:00 early arrival', guest: 'Grace Okonkwo', updates: ['12:26 — Maria Silva: Cleaned — room released'], status: 'Completed' },
@@ -158,22 +107,48 @@ const FrontOfficeTasksView = () => {
     return 'bg-slate-50 text-slate-600 border border-slate-200';
   };
 
-  const submitNewTask = (e) => {
+  const submitNewTask = async (e) => {
     e.preventDefault();
     if (!taskForm.what.trim()) return;
-    const newTask = {
-      id: `FO-${Date.now()}`,
-      room: taskForm.room || '—',
-      title: taskForm.what,
-      tags: [taskForm.priority, taskForm.department],
-      desc: taskForm.detail || 'Manual task.',
-      meta: `💬 Manual · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · due ${taskForm.due || '—'} · ${taskForm.sendTo}`,
-      status: 'New',
-      filter: 'mine'
-    };
-    setDeskTasks(prev => [newTask, ...prev]);
-    setIsTaskModalOpen(false);
-    setTaskForm({ what: '', detail: '', room: '', due: '', department: 'Front Office', priority: 'Normal', sendTo: 'Leave unassigned' });
+
+    try {
+      const newTask = await taskService.createTask({
+        title: taskForm.what,
+        room: taskForm.room,
+        priority: taskForm.priority,
+        department: taskForm.department,
+        desc: taskForm.detail || 'Manual task.',
+        dueTime: taskForm.due
+      });
+
+      const formattedTask = {
+        ...newTask,
+        tags: [newTask.priority, newTask.department],
+        filter: 'mine'
+      };
+
+      setDeskTasks(prev => [formattedTask, ...prev]);
+      setIsTaskModalOpen(false);
+      setTaskForm({ what: '', detail: '', room: '', due: '', department: 'Front Office', priority: 'Normal' });
+    } catch (err) {
+      console.error('Failed to create task:', err);
+      alert('Failed to create task');
+    }
+  };
+
+  const handleAssignTask = async (taskId, assigneeName) => {
+    try {
+      const isAssigned = assigneeName && assigneeName !== 'Leave unassigned';
+      const updated = await taskService.updateTask(taskId, {
+        sendTo: assigneeName,
+        status: isAssigned ? 'Assigned' : 'New'
+      });
+      if (updated) {
+        setDeskTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: updated.status, sendTo: updated.sendTo } : t));
+      }
+    } catch (err) {
+      console.error('Failed to assign task', err);
+    }
   };
 
   const filteredTasks = getFilteredTasks();
@@ -261,12 +236,30 @@ const FrontOfficeTasksView = () => {
                 <p className="text-[11px] text-slate-500 leading-relaxed">{task.desc}</p>
                 <p className="text-[10px] text-slate-400 font-mono">{task.meta}</p>
               </div>
-              {/* Status badge */}
-              <div className="shrink-0">
+              {/* Status badge & Assignment dropdown */}
+              <div className="shrink-0 flex items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${getStatusStyle(task.status)}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${getStatusDot(task.status)}`} />
                   {task.status}
                 </span>
+                
+                {task.status !== 'Completed' && (
+                  <select
+                    value={task.sendTo || 'Leave unassigned'}
+                    onChange={(e) => handleAssignTask(task.id, e.target.value)}
+                    className="px-2 py-1 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 bg-white shadow-xs focus:outline-none cursor-pointer"
+                  >
+                    <option value="Leave unassigned">Assign to...</option>
+                    {users.filter(u => {
+                      if (!task.department) return !u.role.toLowerCase().includes('manager');
+                      if (task.department.toLowerCase() === 'housekeeping') return u.role === 'Housekeeping Staff';
+                      if (task.department.toLowerCase() === 'maintenance') return u.role === 'Maintenance Staff';
+                      return !u.role.toLowerCase().includes('manager');
+                    }).map(u => (
+                      <option key={u.id} value={u.name}>{u.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           ))}
@@ -372,7 +365,7 @@ const FrontOfficeTasksView = () => {
                     onChange={e => setTaskForm(p => ({ ...p, department: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-[#E7E4DD] rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0F5132]/30 bg-[#F7F6F3] cursor-pointer"
                   >
-                    {['Front Office', 'Housekeeping', 'Maintenance', 'Billing', 'Follow-up'].map(d => <option key={d}>{d}</option>)}
+                    {['Front Office', 'Housekeeping', 'Maintenance'].map(d => <option key={d}>{d}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -415,129 +408,19 @@ const TakeoverQueue = () => {
     return <FrontOfficeTasksView />;
   }
 
-  // Master State representing Tasks matching the 1st Image List (12 items total)
-  const [tasks, setTasks] = useState([
-    {
-      id: 'MT-120',
-      room: '205',
-      title: 'Late checkout 15:00 — decision needed',
-      priority: 'Normal',
-      department: 'Front Office',
-      desc: 'Guest asked for 15:00. 24 arrivals today; 205 is needed for a 15:00 check-in.',
-      meta: '💬 Guest WhatsApp · 09:19 · 📅 due 10:30 · Hendrik Vos · Amélie Duprez',
-      status: 'New'
-    },
-    {
-      id: 'MT-114',
-      room: '302',
-      title: 'Air conditioning not cooling',
-      priority: 'High',
-      department: 'Maintenance',
-      desc: 'Split unit runs but blows warm. Guest in house until 19 Aug.',
-      meta: '💬 Guest WhatsApp · 08:32 · 📅 due 11:00 · Clara Bertrand · Peter Janssens',
-      status: 'In Progress'
-    },
-    {
-      id: 'MT-121',
-      room: '307',
-      title: 'VIP preparation — 307',
-      priority: 'High',
-      department: 'VIP',
-      desc: 'Still water, fruit plate, high floor away from lift. Confirm 20:00 table at De Kleine Zavel.',
-      meta: '📋 PMS event · 07:15 · 📅 due 13:30 · Yuki Tanabe · Amélie Duprez',
-      status: 'In Progress'
-    },
-    {
-      id: 'MT-122',
-      room: '411',
-      title: 'Approve €47.60 credit note',
-      priority: 'High',
-      department: 'Billing',
-      desc: 'Duplicate city tax €10.60 and minibar €26.40 posted to wrong room. Folio MRC-47988.',
-      meta: '✉️ Guest Email · 08:05 · 📅 due 17:00 · Nadia Haddad · Jonas Verhaeghe',
-      status: 'Escalated'
-    },
-    {
-      id: 'MT-123',
-      room: '208',
-      title: 'Baby cot in 208 before 14:00',
-      priority: 'Normal',
-      department: 'Housekeeping',
-      desc: 'Guest asked for 14:00. 24 arrivals today.',
-      meta: '💬 Guest WhatsApp · 08:11 · 📅 due 13:30 · Priya Raghavan · Inès Duarte',
-      status: 'Assigned'
-    },
-    {
-      id: 'MT-124',
-      room: '115',
-      title: 'Post laptop charger to guest',
-      priority: 'Low',
-      department: 'Follow-up',
-      desc: 'Black 65W charger from 115, logged 12 Aug. Waiting for the address.',
-      meta: '✉️ Guest Email · yesterday 18:33 · Lars Bakke · Thibault Mertens',
-      status: 'Waiting'
-    },
-    {
-      id: 'MT-115',
-      room: '307',
-      title: 'Shower drain leaking into 207 ceiling',
-      priority: 'Urgent',
-      department: 'Maintenance',
-      desc: 'Reported by housekeeping during stayover clean.',
-      meta: '📋 Housekeeping · 09:06 · Milan Novák',
-      status: 'In Progress'
-    },
-    {
-      id: 'MT-125',
-      room: '212',
-      title: 'Taxi to Antwerpen-Centraal, 15:45',
-      priority: 'Normal',
-      department: 'Front Office',
-      desc: 'Guest asked for 15:45.',
-      meta: '💬 Guest WhatsApp · 09:12 · 📅 due 15:30 · Daniel Weiss · Unassigned',
-      status: 'New'
-    },
-    {
-      id: 'MT-126',
-      room: '208',
-      title: 'Missing payment — card declined on 208',
-      priority: 'High',
-      department: 'Front Office',
-      desc: 'Pre-authorisation failed twice. Request new card at check-in.',
-      meta: '📋 PMS event · 06:40 · 📅 due 14:00 · Priya Raghavan · Amélie Duprez',
-      status: 'Assigned'
-    },
-    {
-      id: 'MT-127',
-      room: '302',
-      title: 'Room move request — 302 to 310',
-      priority: 'High',
-      department: 'Front Office',
-      desc: 'Pending manager decision on compensation vs upgrade.',
-      meta: '🤖 AI Detection · 09:53 · Clara Bertrand · Jonas Verhaeghe',
-      status: 'Escalated'
-    },
-    {
-      id: 'MT-128',
-      room: '215',
-      title: 'Replenish minibar',
-      priority: 'Normal',
-      department: 'Housekeeping',
-      desc: 'Replenish sodas and chips.',
-      meta: '💬 Guest WhatsApp · 10:15 · Hendrik Vos · Inès Duarte',
-      status: 'Completed'
-    },
-    {
-      id: 'MT-129',
-      room: '309',
-      title: 'Change bedsheets',
-      priority: 'Normal',
-      department: 'Housekeeping',
-      desc: 'Slight stain reported on sheets.',
-      meta: '💬 Guest WhatsApp · 11:20 · Hendrik Vos · Inès Duarte',
-      status: 'Completed'
-    }
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      const fetchedUsers = await userService.getUsers();
+      setUsers(fetchedUsers);
+      
+      const fetchedTasks = await taskService.getTasks();
+      setTasks(fetchedTasks);
+    };
+    loadData();
+  }, []);
 
   // Operational Filters state
   const [deptFilter, setDeptFilter] = useState('all'); 
@@ -551,8 +434,7 @@ const TakeoverQueue = () => {
     room: '302',
     due: '13:00',
     department: 'Maintenance',
-    priority: 'Normal',
-    sendTo: 'Leave unassigned'
+    priority: 'Normal'
   });
 
   // Calculate live KPI counts based on tasks list state
@@ -562,34 +444,68 @@ const TakeoverQueue = () => {
   const createdByAiCount = tasks.filter(t => t.meta.includes('AI') || t.meta.includes('PMS') || t.meta.includes('🤖')).length;
 
   // Toggle tasks status to completed when clicked
-  const handleToggleTaskStatus = (id) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === id) {
-        const nextStatus = t.status === 'Completed' ? 'New' : 'Completed';
-        return { ...t, status: nextStatus };
+  const handleToggleTaskStatus = async (id) => {
+    const taskToUpdate = tasks.find(t => t.id === id);
+    if (!taskToUpdate) return;
+    
+    const nextStatus = taskToUpdate.status === 'Completed' ? 'New' : 'Completed';
+    
+    try {
+      const updatedTask = await taskService.updateTask(id, { status: nextStatus });
+      setTasks(prev => prev.map(t => t.id === id ? updatedTask : t));
+    } catch (err) {
+      console.error('Failed to update task status', err);
+    }
+  };
+
+  const handleAssignManagerTask = async (taskId, assigneeName) => {
+    try {
+      const isAssigned = assigneeName && assigneeName !== 'Leave unassigned';
+      const updated = await taskService.updateTask(taskId, {
+        sendTo: assigneeName,
+        status: isAssigned ? 'Assigned' : 'New'
+      });
+      if (updated) {
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: updated.status, sendTo: updated.sendTo } : t));
       }
-      return t;
-    }));
+    } catch (err) {
+      console.error('Failed to assign task', err);
+    }
   };
 
   // Submit Handler for New Task Modal
-  const submitNewTask = (e) => {
+  const submitNewTask = async (e) => {
     e.preventDefault();
     if (!taskForm.what.trim()) return;
 
-    const newTask = {
-      id: `MT-${128 + tasks.length}`,
-      room: taskForm.room,
-      title: taskForm.what,
-      priority: taskForm.priority,
-      department: taskForm.department,
-      desc: taskForm.detail || 'Manual department task.',
-      meta: `💬 Guest WhatsApp · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · due ${taskForm.due} · ${taskForm.sendTo}`,
-      status: 'New'
-    };
+    try {
+      const createdTask = await taskService.createTask({
+        what: taskForm.what,
+        detail: taskForm.detail || 'Manual department task.',
+        room: taskForm.room,
+        due: taskForm.due,
+        department: taskForm.department,
+        priority: taskForm.priority
+      });
 
-    setTasks(prev => [newTask, ...prev]);
-    setIsTaskModalOpen(false);
+      // API returns title, desc, meta appropriately mapped from what we send in taskService
+      // we prepend it to local state so it appears immediately
+      setTasks(prev => [createdTask, ...prev]);
+      setIsTaskModalOpen(false);
+      
+      // Reset form
+      setTaskForm({
+        what: '',
+        detail: '',
+        room: '',
+        due: '',
+        department: 'Maintenance',
+        priority: 'Normal'
+      });
+    } catch (err) {
+      console.error('Failed to create task', err);
+      alert('Error creating task. Please try again.');
+    }
   };
 
   // Filter Tasks list based on current selection
@@ -605,6 +521,8 @@ const TakeoverQueue = () => {
     if (statusFilter !== 'all') {
       if (statusFilter === 'open') {
         result = result.filter(t => t.status !== 'Completed');
+      } else if (statusFilter === 'in_progress') {
+        result = result.filter(t => t.status === 'In Progress');
       } else {
         result = result.filter(t => t.status.toLowerCase() === statusFilter.toLowerCase());
       }
@@ -643,8 +561,7 @@ const TakeoverQueue = () => {
               room: '302',
               due: '13:00',
               department: 'Maintenance',
-              priority: 'Normal',
-              sendTo: 'Leave unassigned'
+              priority: 'Normal'
             });
             setIsTaskModalOpen(true);
           }}
@@ -734,341 +651,316 @@ const TakeoverQueue = () => {
         >
           Guest Request <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'guest request' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.department === 'Guest Request').length}</span>
         </button>
-        <button 
-          onClick={() => setDeptFilter('vip')}
-          className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
-            deptFilter === 'vip' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-600 hover:bg-slate-55'
-          }`}
-        >
-          VIP <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'vip' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.department === 'VIP').length}</span>
-        </button>
-        <button 
-          onClick={() => setDeptFilter('billing')}
-          className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
-            deptFilter === 'billing' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-600 hover:bg-slate-55'
-          }`}
-        >
-          Billing <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'billing' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.department === 'Billing').length}</span>
-        </button>
-        <button 
-          onClick={() => setDeptFilter('follow-up')}
-          className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
-            deptFilter === 'follow-up' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-600 hover:bg-slate-55'
-          }`}
-        >
-          Follow-up <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${deptFilter === 'follow-up' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.department === 'Follow-up').length}</span>
-        </button>
+
       </div>
 
-      {/* Filter Row 2: Status */}
-      <div className="flex flex-wrap gap-4 font-sans text-xs border-b border-slate-200/60 pb-3 text-slate-500">
-        <button 
-          onClick={() => setStatusFilter('all')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'all' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          All
-        </button>
-        <button 
-          onClick={() => setStatusFilter('open')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'open' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          Open
-        </button>
-        <button 
-          onClick={() => setStatusFilter('new')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'new' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          New
-        </button>
-        <button 
-          onClick={() => setStatusFilter('assigned')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'assigned' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          Assigned
-        </button>
-        <button 
-          onClick={() => setStatusFilter('in progress')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'in progress' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          In Progress
-        </button>
-        <button 
-          onClick={() => setStatusFilter('waiting')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'waiting' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          Waiting
-        </button>
-        <button 
-          onClick={() => setStatusFilter('escalated')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'escalated' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          Escalated
-        </button>
-        <button 
-          onClick={() => setStatusFilter('completed')}
-          className={`font-bold transition-all cursor-pointer ${statusFilter === 'completed' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
-        >
-          Completed
-        </button>
-      </div>
+      <div className="p-8 max-w-7xl mx-auto space-y-6">
+        {/* Filters Second Row: Statuses */}
+        <div className="flex items-center gap-6 text-[11px] text-slate-500 font-sans border-b border-[#E7E4DD]">
+          <button 
+            onClick={() => setStatusFilter('all')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'all' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            All
+          </button>
+          <button 
+            onClick={() => setStatusFilter('open')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'open' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            Open
+          </button>
+          <button 
+            onClick={() => setStatusFilter('new')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'new' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            New
+          </button>
+          <button 
+            onClick={() => setStatusFilter('assigned')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'assigned' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            Assigned
+          </button>
+          <button 
+            onClick={() => setStatusFilter('in_progress')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'in_progress' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            In Progress
+          </button>
+          <button 
+            onClick={() => setStatusFilter('waiting')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'waiting' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            Waiting
+          </button>
+          <button 
+            onClick={() => setStatusFilter('escalated')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'escalated' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            Escalated
+          </button>
+          <button 
+            onClick={() => setStatusFilter('completed')}
+            className={`font-bold transition-all cursor-pointer ${statusFilter === 'completed' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}
+          >
+            Completed
+          </button>
+        </div>
 
-      {/* Task Cards List Panel */}
-      <div className="space-y-4 pt-1">
-        {getFilteredTasks().map((task) => {
-          const isCompleted = task.status === 'Completed';
+        {/* Task Cards List Panel */}
+        <div className="space-y-4 pt-1">
+          {getFilteredTasks().map((task) => {
+            const isCompleted = task.status === 'Completed';
 
-          let statusStyle = 'bg-blue-50 text-blue-700 border-blue-200/50';
-          if (isCompleted) {
-            statusStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
-          } else if (task.status === 'In Progress' || task.status === 'Assigned' || task.status === 'Waiting') {
-            statusStyle = 'bg-amber-50 text-amber-700 border-amber-200/50';
-          } else if (task.status === 'Escalated') {
-            statusStyle = 'bg-rose-50 text-rose-700 border-rose-200/50';
-          }
+            let statusStyle = 'bg-blue-50 text-blue-700 border-blue-200/50';
+            if (isCompleted) {
+              statusStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
+            } else if (task.status === 'In Progress' || task.status === 'Assigned' || task.status === 'Waiting') {
+              statusStyle = 'bg-amber-50 text-amber-700 border-amber-200/50';
+            } else if (task.status === 'Escalated') {
+              statusStyle = 'bg-rose-50 text-rose-700 border-rose-200/50';
+            }
 
-          let priorityStyle = 'bg-slate-100 text-slate-600 border-slate-200/60';
-          if (task.priority === 'Urgent') {
-            priorityStyle = 'bg-red-50 text-red-700 border-red-200/50';
-          } else if (task.priority === 'High') {
-            priorityStyle = 'bg-orange-50 text-orange-700 border-orange-200/50';
-          }
+            let priorityStyle = 'bg-slate-100 text-slate-600 border-slate-200/60';
+            if (task.priority === 'Urgent') {
+              priorityStyle = 'bg-red-50 text-red-700 border-red-200/50';
+            } else if (task.priority === 'High') {
+              priorityStyle = 'bg-orange-50 text-orange-700 border-orange-200/50';
+            }
 
-          return (
-            <div key={task.id} className="bg-white rounded-3xl border border-[#E7E4DD] shadow-xs p-5 flex items-center justify-between gap-4 hover:bg-slate-50/20 transition-colors">
-              <div className="flex items-center gap-4">
-                {/* Room Badge */}
-                <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-sm text-slate-800 shrink-0 font-mono">
-                  {task.room}
-                </div>
-
-                <div className="text-left space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap font-sans">
-                    <h4 className={`text-sm font-bold leading-tight font-serif ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                      {task.title}
-                    </h4>
-                    <span className={`px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider border font-mono ${priorityStyle}`}>
-                      {task.priority}
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-500 text-[8px] font-black uppercase tracking-wider font-mono">
-                      {task.department}
-                    </span>
+            return (
+              <div key={task.id} className="bg-white rounded-3xl border border-[#E7E4DD] shadow-xs p-5 flex items-center justify-between gap-4 hover:bg-slate-50/20 transition-colors">
+                <div className="flex items-center gap-4">
+                  {/* Room Badge */}
+                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-sm text-slate-800 shrink-0 font-mono">
+                    {task.room}
                   </div>
-                  {task.desc && (
-                    <p className={`text-xs font-semibold leading-relaxed ${isCompleted ? 'text-slate-350' : 'text-slate-650 font-sans'}`}>
-                      {task.desc}
+
+                  <div className="text-left space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap font-sans">
+                      <h4 className={`text-sm font-bold leading-tight font-serif ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                        {task.title}
+                      </h4>
+                      <span className={`px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider border font-mono ${priorityStyle}`}>
+                        {task.priority}
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-500 text-[8px] font-black uppercase tracking-wider font-mono">
+                        {task.department}
+                      </span>
+                    </div>
+                    {task.desc && (
+                      <p className={`text-xs font-semibold leading-relaxed ${isCompleted ? 'text-slate-350' : 'text-slate-650 font-sans'}`}>
+                        {task.desc}
+                      </p>
+                    )}
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono font-sans leading-none pt-0.5">
+                      {task.meta}
                     </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 font-sans flex flex-col items-end gap-2">
+                  <span onClick={() => handleToggleTaskStatus(task.id)} className={`cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${statusStyle}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      isCompleted ? 'bg-emerald-500' : task.status === 'Escalated' ? 'bg-rose-500' : task.status === 'New' ? 'bg-blue-500' : 'bg-amber-500'
+                    }`} />
+                    {task.status}
+                  </span>
+                  
+                  {!isCompleted && (
+                    <select
+                      value={task.sendTo || 'Leave unassigned'}
+                      onChange={(e) => handleAssignManagerTask(task.id, e.target.value)}
+                      className="px-2 py-1 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 bg-white shadow-xs focus:outline-none cursor-pointer"
+                    >
+                      <option value="Leave unassigned">Assign to...</option>
+                      {users.filter(u => {
+                        if (!task.department) return !u.role.toLowerCase().includes('manager');
+                        if (task.department.toLowerCase() === 'housekeeping') return u.role === 'Housekeeping Staff';
+                        if (task.department.toLowerCase() === 'maintenance') return u.role === 'Maintenance Staff';
+                        return !u.role.toLowerCase().includes('manager');
+                      }).map(u => (
+                        <option key={u.id} value={u.name}>{u.name}</option>
+                      ))}
+                    </select>
                   )}
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono font-sans leading-none pt-0.5">
-                    {task.meta}
-                  </p>
                 </div>
               </div>
+            );
+          })}
 
-              {/* Status Badge clickable action to toggle status */}
-              <div className="shrink-0 font-sans cursor-pointer" onClick={() => handleToggleTaskStatus(task.id)}>
-                <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${statusStyle}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    isCompleted ? 'bg-emerald-500' : task.status === 'Escalated' ? 'bg-rose-500' : task.status === 'New' ? 'bg-blue-500' : 'bg-amber-500'
-                  }`} />
-                  {task.status}
-                </span>
-              </div>
+          {getFilteredTasks().length === 0 && (
+            <div className="py-12 text-center text-slate-400 text-xs font-bold font-sans">
+              No tasks match the active filters.
             </div>
-          );
-        })}
+          )}
+        </div>
 
-        {getFilteredTasks().length === 0 && (
-          <div className="py-12 text-center text-slate-400 text-xs font-bold font-sans">
-            No tasks match the active filters.
+        {/* Bottom Section: Where work comes from */}
+        <div className="space-y-4 pt-4">
+          <div className="text-left select-none space-y-0.5">
+            <h3 className="text-lg font-bold text-slate-950 font-serif">Where work comes from</h3>
+            <p className="text-[11px] text-slate-500 font-medium font-sans">Sources the AI turns into tasks automatically</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans pb-16">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
+              <div className="space-y-0.5">
+                <span className="px-2 py-0.5 rounded bg-blue-55 text-blue-700 text-[8.5px] font-black uppercase tracking-wider font-mono">Guest WhatsApp</span>
+                <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">5</h4>
+              </div>
+              <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
+                Requests detected in the guest's own words
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
+              <div className="space-y-0.5">
+                <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[8.5px] font-black uppercase tracking-wider font-mono">Guest Email</span>
+                <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">2</h4>
+              </div>
+              <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
+                Gmail, Outlook and your own mailbox
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
+              <div className="space-y-0.5">
+                <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[8.5px] font-black uppercase tracking-wider font-mono">AI Detection</span>
+                <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">2</h4>
+              </div>
+              <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
+                Follow-ups the AI decides are needed
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#E7E4DD] p-5 shadow-xs text-left space-y-3.5">
+              <div className="space-y-0.5">
+                <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[8.5px] font-black uppercase tracking-wider font-mono">PMS event</span>
+                <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">2</h4>
+              </div>
+              <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
+                Arrivals, VIP flags, failed authorisations
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* NEW TASK MODAL OVERLAY */}
+        {isTaskModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-[1px]">
+            <div className="bg-white rounded-3xl w-full max-w-lg p-8 space-y-6 relative shadow-2xl border border-slate-100 font-sans text-left">
+              <button 
+                onClick={() => setIsTaskModalOpen(false)}
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+              
+              <div className="space-y-1 font-sans">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono block">NEW TASK</span>
+                <h3 className="text-xl font-bold text-slate-900 font-serif leading-none">Send work to a department</h3>
+              </div>
+
+              <form onSubmit={submitNewTask} className="space-y-4">
+                <div className="space-y-1 text-left">
+                  <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">What needs doing</label>
+                  <input 
+                    type="text" 
+                    value={taskForm.what}
+                    onChange={(e) => setTaskForm({ ...taskForm, what: e.target.value })}
+                    placeholder="Extra pillows for 208"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1 text-left">
+                  <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Detail (optional)</label>
+                  <textarea 
+                    value={taskForm.detail}
+                    onChange={(e) => setTaskForm({ ...taskForm, detail: e.target.value })}
+                    placeholder="Additional details..."
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm h-24 focus:outline-none focus:border-[#105F39] text-slate-700 font-sans resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-left">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Room</label>
+                    <input 
+                      type="text" 
+                      value={taskForm.room}
+                      onChange={(e) => setTaskForm({ ...taskForm, room: e.target.value })}
+                      placeholder="302"
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Due</label>
+                    <input 
+                      type="time" 
+                      value={taskForm.due}
+                      onChange={(e) => setTaskForm({ ...taskForm, due: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-left">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Department</label>
+                    <select 
+                      value={taskForm.department}
+                      onChange={(e) => setTaskForm({ ...taskForm, department: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans cursor-pointer"
+                    >
+                      <option value="Front Office">Front Office</option>
+                      <option value="Housekeeping">Housekeeping</option>
+                      <option value="Maintenance">Maintenance</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Priority</label>
+                    <select 
+                      value={taskForm.priority}
+                      onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans cursor-pointer"
+                    >
+                      <option value="Normal">Normal</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-400 font-medium font-sans leading-relaxed text-left pt-1">
+                  Assigned tasks are delivered as an interactive WhatsApp card. The status the person taps comes straight back into these dashboards.
+                </p>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={() => setIsTaskModalOpen(false)}
+                    className="px-6 py-2.5 bg-[#F5F3ED] hover:bg-[#eae8e2] rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-6 py-2.5 bg-[#83978D] hover:bg-[#71867c] text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                  >
+                    Create task
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Bottom Section: Where work comes from */}
-      <div className="space-y-4 pt-4">
-        <div className="text-left select-none space-y-0.5">
-          <h3 className="text-lg font-bold text-slate-950 font-serif">Where work comes from</h3>
-          <p className="text-[11px] text-slate-500 font-medium font-sans">Sources the AI turns into tasks automatically</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans pb-16">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-            <div className="space-y-0.5">
-              <span className="px-2 py-0.5 rounded bg-blue-55 text-blue-700 text-[8.5px] font-black uppercase tracking-wider font-mono">Guest WhatsApp</span>
-              <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">5</h4>
-            </div>
-            <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
-              Requests detected in the guest's own words
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-            <div className="space-y-0.5">
-              <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[8.5px] font-black uppercase tracking-wider font-mono">Guest Email</span>
-              <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">2</h4>
-            </div>
-            <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
-              Gmail, Outlook and your own mailbox
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-            <div className="space-y-0.5">
-              <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[8.5px] font-black uppercase tracking-wider font-mono">AI Detection</span>
-              <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">2</h4>
-            </div>
-            <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
-              Follow-ups the AI decides are needed
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#E7E4DD] p-5 shadow-xs text-left space-y-3.5">
-            <div className="space-y-0.5">
-              <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[8.5px] font-black uppercase tracking-wider font-mono">PMS event</span>
-              <h4 className="text-xl font-bold text-slate-900 leading-none pt-2 font-serif serif-font">2</h4>
-            </div>
-            <p className="text-[11px] text-slate-505 leading-relaxed font-semibold">
-              Arrivals, VIP flags, failed authorisations
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* NEW TASK MODAL OVERLAY */}
-      {isTaskModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-[1px]">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-8 space-y-6 relative shadow-2xl border border-slate-100 font-sans text-left">
-            <button 
-              onClick={() => setIsTaskModalOpen(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-            
-            <div className="space-y-1 font-sans">
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono block">NEW TASK</span>
-              <h3 className="text-xl font-bold text-slate-900 font-serif leading-none">Send work to a department</h3>
-            </div>
-
-            <form onSubmit={submitNewTask} className="space-y-4">
-              <div className="space-y-1 text-left">
-                <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">What needs doing</label>
-                <input 
-                  type="text" 
-                  value={taskForm.what}
-                  onChange={(e) => setTaskForm({ ...taskForm, what: e.target.value })}
-                  placeholder="Extra pillows for 208"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1 text-left">
-                <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Detail (optional)</label>
-                <textarea 
-                  value={taskForm.detail}
-                  onChange={(e) => setTaskForm({ ...taskForm, detail: e.target.value })}
-                  placeholder="Additional details..."
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm h-24 focus:outline-none focus:border-[#105F39] text-slate-700 font-sans resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-left">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Room</label>
-                  <input 
-                    type="text" 
-                    value={taskForm.room}
-                    onChange={(e) => setTaskForm({ ...taskForm, room: e.target.value })}
-                    placeholder="302"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Due</label>
-                  <input 
-                    type="text" 
-                    value={taskForm.due}
-                    onChange={(e) => setTaskForm({ ...taskForm, due: e.target.value })}
-                    placeholder="13:00"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-left">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Department</label>
-                  <select 
-                    value={taskForm.department}
-                    onChange={(e) => setTaskForm({ ...taskForm, department: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans cursor-pointer"
-                  >
-                    <option value="Front Office">Front Office</option>
-                    <option value="Housekeeping">Housekeeping</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="VIP">VIP</option>
-                    <option value="Billing">Billing</option>
-                    <option value="Follow-up">Follow-up</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Priority</label>
-                  <select 
-                    value={taskForm.priority}
-                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans cursor-pointer"
-                  >
-                    <option value="Normal">Normal</option>
-                    <option value="High">High</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1 text-left">
-                <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block font-semibold">Send to</label>
-                <select 
-                  value={taskForm.sendTo}
-                  onChange={(e) => setTaskForm({ ...taskForm, sendTo: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans cursor-pointer"
-                >
-                  <option value="Leave unassigned">Leave unassigned</option>
-                  <option value="Hendrik Vos">Hendrik Vos</option>
-                  <option value="Peter Janssens">Peter Janssens</option>
-                  <option value="Yuki Tanabe">Yuki Tanabe</option>
-                  <option value="Milan Novak">Milan Novak</option>
-                  <option value="Jonas Verhaeghe">Jonas Verhaeghe</option>
-                </select>
-              </div>
-
-              <p className="text-[10px] text-slate-400 font-medium font-sans leading-relaxed text-left pt-1">
-                Assigned tasks are delivered as an interactive WhatsApp card. The status the person taps comes straight back into these dashboards.
-              </p>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button 
-                  type="button"
-                  onClick={() => setIsTaskModalOpen(false)}
-                  className="px-6 py-2.5 bg-[#F5F3ED] hover:bg-[#eae8e2] rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-6 py-2.5 bg-[#83978D] hover:bg-[#71867c] text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                >
-                  Create task
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

@@ -127,16 +127,6 @@ export const DashboardSidebar = () => {
               >
                 <Icon size={17} className={isActive ? "text-[#0F5132]" : "text-slate-400"} />
                 <span>{item.name}</span>
-                {item.name === 'Conversations' && (
-                  <span className={cn("ml-auto text-[10px] font-black rounded-full px-2 py-0.5 font-mono", isActive ? "bg-[#0F5132] text-white" : "bg-slate-200 text-slate-600")}>
-                    2
-                  </span>
-                )}
-                {item.name === 'Tasks' && (
-                  <span className={cn("ml-auto text-[10px] font-black rounded-full px-2 py-0.5 font-mono", isActive ? "bg-[#0F5132] text-white" : "bg-slate-200 text-slate-600")}>
-                    10
-                  </span>
-                )}
               </NavLink>
             );
           })}

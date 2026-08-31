@@ -208,7 +208,7 @@ const Integrations = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/hotels/settings`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
         }
       });
       const data = await res.json();
@@ -353,7 +353,7 @@ const Integrations = () => {
 
     const settingsRes = await fetch(`${API_BASE_URL}/api/hotels/settings`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+        'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
       }
     });
     const settingsData = await settingsRes.json();
@@ -364,7 +364,7 @@ const Integrations = () => {
 
     const hotelsRes = await fetch(`${API_BASE_URL}/api/hotels`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+        'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
       }
     });
     const hotelsData = await hotelsRes.json();
@@ -465,7 +465,7 @@ const Integrations = () => {
 
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+      'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
     };
 
     if (provider === EMAIL_PROVIDERS.IMAP_SMTP) {
@@ -565,7 +565,7 @@ const Integrations = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
         },
         body: JSON.stringify(updates)
       });

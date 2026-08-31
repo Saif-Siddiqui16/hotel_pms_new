@@ -311,8 +311,8 @@ const FrontOfficeConversationsView = () => {
     setIsAuthenticated(false);
     navigate('/login');
   };
-  const [conversations, setConversations] = useState(frontOfficeConversationsList);
-  const [selectedId, setSelectedId] = useState('clara-bertrand');
+  const [conversations, setConversations] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'ai', 'human'
   const [searchTerm, setSearchTerm] = useState('');
   const [replyText, setReplyText] = useState('');
@@ -323,20 +323,81 @@ const FrontOfficeConversationsView = () => {
   // Get active selected conversation
   const selectedConv = conversations.find(c => c.id === selectedId) || conversations[0];
 
-  const chatSubject = 
-    selectedConv.id === 'clara-bertrand' ? 'Air conditioning in 302 not cooli...' :
-    selectedConv.id === 'hendrik-vos' ? 'Late checkout 15:00 — decision needed' :
-    selectedConv.id === 'nadia-haddad' ? 'Approve €47.60 credit note' :
-    selectedConv.id === 'grace-okonkwo' ? 'Early check-in at 13:00 today request' :
-    selectedConv.id === 'sofia-marchetti' ? 'Breakfast hours & options enquiry' :
-    selectedConv.id === 'daniel-weiss' ? 'Extra towels requested for room 212' :
-    selectedConv.id === 'yuki-tanabe' ? 'Local restaurant recommendations query' :
-    selectedConv.id === 'priya-raghavan' ? 'Cot request details for room 208' :
-    selectedConv.id === 'lars-bakke' ? 'Lost laptop charger in room 115' :
-    selectedConv.id === 'elena-novak' ? 'Bottle of champagne folio request' :
-    'Guest Conversation';
+  const chatSubject = 'Guest Conversation';
 
-  // Initialize reply text with the AI Draft when selected conversation changes
+  useEffect(() => {
+    const fetchConvs = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/conversations`);
+        const data = await res.json();
+        if (data.success) {
+          const mapped = data.data.map(c => ({
+            id: c.id.toString(),
+            name: c.guestName || 'Unknown Guest',
+            lastMsg: c.lastMessage || 'No messages yet',
+            time: c.waitingDuration || 'Just now',
+            tag: c.status === 'escalated' ? `Escalated ${c.roomNumber || ''}` : (c.status === 'active' ? 'AI handling' : 'Resolved'),
+            tagColor: c.status === 'escalated' ? 'bg-rose-50 text-rose-700 border-rose-100' : (c.status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-blue-50 text-blue-700 border-blue-100'),
+            unreadCount: c.status === 'escalated' ? 1 : 0,
+            room: c.roomNumber || 'N/A',
+            status: c.status === 'resolved' ? 'Departed' : 'In House',
+            stay: c.checkoutDate ? `Until ${new Date(c.checkoutDate).toLocaleDateString()}` : 'N/A',
+            nights: 'N/A',
+            category: 'N/A',
+            rate: 'N/A',
+            bookingNo: 'N/A',
+            lang: c.loyaltyTier || 'Standard Member',
+            tags: [],
+            messages: [],
+            aiDraft: '',
+            aiSummary: ''
+          }));
+          setConversations(prev => {
+            const merged = mapped.map(newC => {
+              const existing = prev.find(p => p.id === newC.id);
+              return {
+                ...newC,
+                messages: existing && existing.messages.length > 0 ? existing.messages : newC.messages
+              };
+            });
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch conversations", err);
+      }
+    };
+    fetchConvs();
+    const interval = setInterval(fetchConvs, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const fetchMsgs = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/conversations/${selectedId}/messages`);
+        const data = await res.json();
+        if (data.success && data.messages) {
+          const formatted = data.messages
+            .filter(m => m.senderType !== 'tool' && !(m.senderType === 'ai' && !m.content?.trim()))
+            .map(m => ({
+              sender: (m.senderType === 'guest') ? 'guest' : (m.senderType === 'human' ? 'user' : 'ai'),
+              text: m.content,
+              time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              channel: m.channel || 'WhatsApp'
+            }));
+          setConversations(prev => prev.map(c => c.id === selectedId ? { ...c, messages: formatted } : c));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchMsgs();
+    const interval = setInterval(fetchMsgs, 5000);
+    return () => clearInterval(interval);
+  }, [selectedId]);
+
   useEffect(() => {
     if (selectedConv) {
       setReplyText(selectedConv.aiDraft || '');
@@ -369,28 +430,37 @@ const FrontOfficeConversationsView = () => {
     return matchesSearch && activeTabConfig.match(c);
   });
 
-  const handleSendReply = () => {
-    if (!replyText.trim()) return;
+  const handleSendReply = async () => {
+    if (!replyText.trim() || !selectedId) return;
     
-    // Add reply message to selected conversation's messages
-    const updated = conversations.map(c => {
-      if (c.id === selectedId) {
-        return {
-          ...c,
-          unreadCount: 0,
-          lastMsg: `You: ${replyText}`,
-          messages: [
-            ...c.messages,
-            { sender: 'user', text: replyText, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), channel: 'WhatsApp' }
-          ],
-          aiDraft: '' // Clear draft since we replied
-        };
-      }
-      return c;
-    });
-    
-    setConversations(updated);
-    setReplyText('');
+    try {
+      await fetch(`${API_BASE_URL}/api/conversations/${selectedId}/human-reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: replyText })
+      });
+      // Add reply message to selected conversation's messages locally to feel responsive
+      const updated = conversations.map(c => {
+        if (c.id === selectedId) {
+          return {
+            ...c,
+            unreadCount: 0,
+            lastMsg: `You: ${replyText}`,
+            messages: [
+              ...c.messages,
+              { sender: 'user', text: replyText, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), channel: 'WhatsApp' }
+            ],
+            aiDraft: '' // Clear draft since we replied
+          };
+        }
+        return c;
+      });
+      
+      setConversations(updated);
+      setReplyText('');
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleResetDraft = () => {
@@ -530,6 +600,7 @@ const FrontOfficeConversationsView = () => {
           <div className={`lg:col-span-2 flex-col h-full min-h-0 border-r border-[#E7E4DD] w-full lg:w-auto ${mobileView === 'chat' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* Active chat header */}
+            {selectedConv && (
             <div className="px-6 py-4 border-b border-[#E7E4DD] bg-white flex justify-between items-center shrink-0">
               <div className="text-left space-y-0.5 flex items-center gap-3">
                 <button
@@ -566,8 +637,10 @@ const FrontOfficeConversationsView = () => {
                 </button>
               </div>
             </div>
+            )}
 
             {/* Scrollable messages container */}
+            {selectedConv && (
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/30 space-y-4 min-h-[150px]">
               {selectedConv.messages.map((m, idx) => {
                 const isGuest = m.sender === 'guest';
@@ -595,8 +668,10 @@ const FrontOfficeConversationsView = () => {
                 );
               })}
             </div>
+            )}
 
             {/* AI Draft Suggestion Box */}
+            {selectedConv && (
             <div className="p-4 sm:p-6 border-t border-[#E7E4DD] bg-white space-y-3 sm:space-y-4 shrink-0">
               
               {/* Draft info header */}
@@ -699,11 +774,14 @@ const FrontOfficeConversationsView = () => {
               </div>
 
             </div>
+            )}
           </div>
 
           {/* Column 3: Guest Profile Details (1/4 width) */}
           <div className={`p-6 space-y-6 overflow-y-auto bg-slate-50/20 text-left h-full min-h-0 flex-col w-full lg:w-auto ${mobileView === 'info' ? 'flex' : 'hidden lg:flex'}`}>
             
+            {selectedConv && (
+              <>
             {/* Header info */}
             <div className="space-y-3 shrink-0">
               <div className="flex items-center justify-between lg:hidden mb-4 border-b border-[#E7E4DD] pb-4">
@@ -778,15 +856,20 @@ const FrontOfficeConversationsView = () => {
             </div>
 
             {/* AI Summary Box */}
+            {selectedConv && (
             <div className="space-y-3 flex-1 flex flex-col min-h-0">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 font-mono flex items-center gap-1.5 shrink-0">
                 <Sparkles size={12} className="text-[#105F39]" />
                 <span>AI Summary</span>
               </h4>
               <div className="flex-1 overflow-y-auto bg-[#fffdf9] p-4 rounded-2xl border border-amber-100 shadow-xs text-xs text-slate-650 leading-relaxed font-medium">
-                {selectedConv.aiSummary}
+                {selectedConv.aiSummary || 'No AI summary available.'}
               </div>
             </div>
+            )}
+
+              </>
+            )}
 
           </div>
 
@@ -832,7 +915,7 @@ const Conversations = () => {
         );
         const results = await Promise.all(promises);
         
-        let allConvs = [];
+        let backendConvs = [];
         results.forEach((data, idx) => {
           if (data.success && Array.isArray(data.data)) {
             const transformed = data.data.map(c => ({
@@ -846,30 +929,35 @@ const Conversations = () => {
               status: c.loyaltyTier || 'Standard Member',
               stay: c.checkoutDate ? `Until ${c.checkoutDate}` : 'Active Stay',
               confidence: (c.status === 'active' || c.status === 'resolved') ? '98%' : 'N/A',
-              messages: [] // messages will be fetched on demand below
+              messages: []
             }));
-            allConvs = [...allConvs, ...transformed];
+            backendConvs = [...backendConvs, ...transformed];
           }
         });
 
-        // Always set conversations, even if empty
+        // Always merge backend conversations with the hardcoded demo list to avoid screen jumping
         setConvs(prevConvs => {
-          return allConvs.map(newC => {
+          // Keep all hardcoded ones and any newly fetched ones
+          const merged = [...initialConversations];
+          
+          backendConvs.forEach(newC => {
+            if (!merged.find(m => m.id === newC.id)) {
+              merged.push(newC);
+            }
+          });
+
+          // Preserve loaded messages for all conversations
+          return merged.map(newC => {
             const existing = prevConvs.find(p => p.id === newC.id);
             return {
               ...newC,
-              messages: existing ? existing.messages : []
+              messages: existing && existing.messages && existing.messages.length > 0 
+                ? existing.messages 
+                : (newC.messages || [])
             };
           });
         });
         
-        if (allConvs.length > 0) {
-          if (!allConvs.find(c => c.id === selectedId)) {
-            setSelectedId(allConvs[0].id);
-          }
-        } else {
-          setSelectedId(null);
-        }
       } catch (err) {
         console.warn('Backend offline or database unseeded, keeping simulated demo conversations:', err.message);
       }
@@ -878,7 +966,7 @@ const Conversations = () => {
     fetchAllConversations();
     const interval = setInterval(fetchAllConversations, 15000);
     return () => clearInterval(interval);
-  }, [selectedId]);
+  }, []);
 
   // Fetch messages dynamically when selectedId changes
   useEffect(() => {
@@ -1058,7 +1146,7 @@ const Conversations = () => {
   };
 
   const handleTransferToHuman = (aiResp = 'Transferring to human operator.', reason = 'Requested human operator') => {
-    const takeoverList = JSON.parse(localStorage.getItem('autopilot_voice_takeover') || '[]');
+    const takeoverList = JSON.parse(sessionStorage.getItem('autopilot_voice_takeover') || '[]');
     takeoverList.push({
       id: Date.now(),
       guestName: activeConv.guest,
@@ -1071,7 +1159,7 @@ const Conversations = () => {
       aiSuggestion: aiResp,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
-    localStorage.setItem('autopilot_voice_takeover', JSON.stringify(takeoverList));
+    sessionStorage.setItem('autopilot_voice_takeover', JSON.stringify(takeoverList));
     setCallState('Ended');
     setTimeout(() => {
       setIsCallModalOpen(false);

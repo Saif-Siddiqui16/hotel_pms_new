@@ -525,7 +525,7 @@ const AccountSecurityPanel = ({ settings, onChange }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}` // Fallback if using local storage
+          Authorization: `Bearer ${sessionStorage.getItem("token") || ""}` // Fallback if using local storage
         },
         body: JSON.stringify({ currentPassword, newPassword })
       });

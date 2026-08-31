@@ -16,21 +16,37 @@ import {
   X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { userService } from '../services/userService';
+import { taskService } from '../services/taskService';
 
 export const MaintenanceDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setIsAuthenticated } = useApp();
+  const { setIsAuthenticated, user } = useApp();
+  const roleStr = user?.role?.toLowerCase() || '';
+  const isStaff = !roleStr.includes('manager') && !roleStr.includes('admin');
+
+  const [users, setUsers] = React.useState([]);
+
+  React.useEffect(() => {
+    const loadUsers = async () => {
+      const fetchedUsers = await userService.getUsers();
+      setUsers(fetchedUsers);
+    };
+    loadUsers();
+  }, []);
 
   // Navigation view read from query params
   const searchParams = new URLSearchParams(location.search);
   const activeView = searchParams.get('tab') || 'dashboard';
 
-  // Simulated operational state variables for Dashboard
-  const [openIssuesCount, setOpenIssuesCount] = useState(5);
-  const [activeCount, setActiveCount] = useState(1);
-  const [inProgressCount, setInProgressCount] = useState(3);
-  const [completedTodayCount, setCompletedTodayCount] = useState(1);
+  const [tasks, setTasks] = useState([]);
+
+  // Derived KPI counts
+  const openIssuesCount = tasks.filter(t => t.status !== 'Completed' && t.status !== 'Fixed').length;
+  const activeCount = tasks.filter(t => t.status === 'New' || t.status === 'Assigned').length;
+  const inProgressCount = tasks.filter(t => t.status === 'In Progress').length;
+  const completedTodayCount = tasks.filter(t => t.status === 'Completed' || t.status === 'Fixed').length;
   const [activeTechnicianTab, setActiveTechnicianTab] = useState('peter'); // 'peter', 'milan'
 
   // Simulated operational state variables for Issues Log Page
@@ -48,8 +64,7 @@ export const MaintenanceDashboard = () => {
     room: '302',
     due: '13:00',
     department: 'Maintenance',
-    priority: 'Normal',
-    sendTo: 'Leave unassigned'
+    priority: 'Normal'
   });
 
   // New Issue Form states
@@ -60,168 +75,25 @@ export const MaintenanceDashboard = () => {
     urgency: 'Normal'
   });
 
-  // Master ticket data lists for Dashboard
-  const [dashboardTickets, setDashboardTickets] = useState([
-    { 
-      id: 'MT-116', 
-      room: 'Room 307', 
-      isUrgent: true, 
-      status: 'In Progress', 
-      isHousekeeping: true,
-      title: 'Shower drain leaking into 207 ceiling',
-      desc: 'Water leaking through ceiling. Assigned to Milan Novák.',
-      meta: 'WhatsApp · Rosa Fernandes · 09:05',
-      history: [
-        '09:05 · Front Office says: We have reported 307 shower leak',
-        '09:06 · Milan accepted on WhatsApp',
-        '09:11 · Milan Novák accepted the 307 shower leak'
-      ]
-    },
-    { 
-      id: 'MT-115', 
-      room: 'Room 302', 
-      isHigh: true, 
-      status: 'In Progress', 
-      title: 'Air conditioning not cooling',
-      desc: 'AC is blowing room-temperature air. Checked condenser check in progress.',
-      meta: 'Guest WhatsApp · Clara Bertrand · 08:31',
-      history: [
-        '08:32 · Clara Bertrand: Guest complains AC not working.',
-        '09:35 · Peter Janssens accepted AC check.',
-        '09:36 · AC condenser check in progress.'
-      ]
-    },
-    { 
-      id: 'MT-113', 
-      room: 'Room Lobby', 
-      isNormal: true, 
-      status: 'Waiting Parts', 
-      title: 'Automated door sensor malfunctioning',
-      desc: 'Door opens with no one present. Trigger every 10 minutes.',
-      meta: 'PMS Event · Front Office · 07:15',
-      history: [
-        '07:15 · PMS Alert: Automated sensor malfunctioning.'
-      ]
-    },
-    { 
-      id: 'MT-114', 
-      room: 'Room 216', 
-      isNormal: true, 
-      status: 'Waiting Parts', 
-      title: 'Bathroom light flickering',
-      desc: 'Light flickering in bathroom.',
-      meta: 'Housekeeping · Maria Silva · 07:12',
-      history: [
-        '07:12 · Reported during departure clean.',
-        '07:15 · Assigned on WhatsApp.'
-      ]
-    },
-    { 
-      id: 'MT-112', 
-      room: 'Room 205', 
-      isLow: true, 
-      status: 'In Progress', 
-      isMaintenance: true,
-      title: 'Repainting after water damage',
-      desc: 'Plaster work completed. Repainting scheduled.',
-      meta: 'PMS Event · Maintenance · yesterday',
-      history: [
-        'yesterday · Plaster work finished.'
-      ]
-    }
-  ]);
+  React.useEffect(() => {
+    const loadTasks = async () => {
+      const allTasks = await taskService.getTasks();
+      const maintenanceTasks = allTasks.filter(t => t.department === 'Maintenance');
+      const formattedTasks = maintenanceTasks.map(t => ({
+        ...t,
+        isUrgent: t.priority === 'Urgent',
+        isHigh: t.priority === 'High',
+        isNormal: t.priority === 'Normal',
+        isLow: t.priority === 'Low',
+        isHousekeeping: false,
+        isMaintenance: true,
+        history: []
+      }));
+      setTasks(formattedTasks);
+    };
+    loadTasks();
+  }, []);
 
-  // Master ticket data lists for Issues Log Page
-  const [issuesList, setIssuesList] = useState([
-    {
-      id: 'MT-114',
-      room: 'Room 302',
-      isHigh: true,
-      status: 'In Progress',
-      title: 'Air conditioning not cooling',
-      desc: 'Split unit runs, fan fine, air stays warm. Suspect condenser fan or low refrigerant.',
-      meta: '08:32 · Clara Bertrand · Guest via WhatsApp · Peter Janssens',
-      history: [
-        { time: '09:20', type: 'accepted', text: 'Accepted on WhatsApp' },
-        { time: '09:25', type: 'accepted', text: 'Roof condenser fan not spinning — checking capacitor' }
-      ]
-    },
-    {
-      id: 'MT-115',
-      room: 'Room 307',
-      isUrgent: true,
-      status: 'In Progress',
-      isOutOfService: true,
-      title: 'Shower drain leaking into 207 ceiling',
-      desc: 'Water tracking through the slab into 207. Seal or waste trap failure.',
-      meta: '09:05 · Rosa Ferreira · Housekeeping via WhatsApp · Milan Novak',
-      history: [
-        { time: '09:07', type: 'bullet', text: 'Front Office warned — VIP arrival 14:00 for this room' },
-        { time: '09:11', type: 'accepted', text: 'Accepted on WhatsApp' },
-        { time: '09:48', type: 'accepted', text: 'Waste trap cracked. Replacement in the van, 30 min' }
-      ]
-    },
-    {
-      id: 'MT-116',
-      room: 'Room 118',
-      isNormal: true,
-      status: 'Waiting Parts',
-      title: 'Bathroom light flickering',
-      desc: 'LED driver buzzing when dimmed.',
-      meta: '09:05 · Alina Popescu · Housekeeping via WhatsApp · unassigned',
-      history: [
-        { time: '09:05', type: 'accepted', text: 'Reported during departure clean' },
-        { time: '11:55', type: 'accepted', text: 'Status set to Waiting Parts' }
-      ]
-    },
-    {
-      id: 'MT-117',
-      room: 'Room Lobby',
-      isNormal: true,
-      status: 'Waiting Parts',
-      title: 'Automatic door sensor mistriggering',
-      desc: 'Door opens with no one present, roughly every ten minutes.',
-      meta: '08:15 · Amélie Duprez · Front Office · Peter Janssens',
-      history: [
-        { time: '08:44', type: 'accepted', text: 'Sensor ordered, arrives Wednesday. Reduced range in the meantime' }
-      ]
-    },
-    {
-      id: 'MT-118',
-      room: 'Room 318',
-      isLow: true,
-      status: 'In Progress',
-      isOutOfService: true,
-      title: 'Repainting after water damage',
-      desc: 'Planned works, room blocked in PMS until 20 Aug.',
-      meta: 'yesterday 16:28 · Jonas Verhaeghe · AI Detection · Milan Novak',
-      history: [
-        { time: 'yesterday 16:22', type: 'accepted', text: 'Room blocked in PMS until 20 Aug' }
-      ]
-    }
-  ]);
-
-  // Master Maintenance Tasks List
-  const [tasksList, setTasksList] = useState([
-    {
-      id: 'task-1',
-      room: '302',
-      title: 'Air conditioning not cooling',
-      priority: 'High',
-      desc: 'Split unit runs but blows warm. Guest in house until 19 Aug.',
-      meta: '💬 Guest WhatsApp · 08:32 · 📅 due 11:00 · Clara Bertrand · Peter Janssens',
-      status: 'In Progress'
-    },
-    {
-      id: 'task-2',
-      room: '307',
-      title: 'Shower drain leaking into 207 ceiling',
-      priority: 'Urgent',
-      desc: 'Reported by housekeeping during stayover clean.',
-      meta: '📋 Housekeeping · 09:06 · Milan Novák',
-      status: 'In Progress'
-    }
-  ]);
 
   // WhatsApp Reports mock list (bottom of Tasks view)
   const whatsappReports = [
@@ -240,150 +112,116 @@ export const MaintenanceDashboard = () => {
   };
 
   // Actions for Dashboard
-  const handleStartWork = (id) => {
-    setDashboardTickets(prev => prev.map(t => {
-      if (t.id === id) {
-        if (t.status === 'Waiting Parts') {
-          setInProgressCount(c => c + 1);
-        }
-        return { ...t, status: 'In Progress' };
+  const updateTaskStatus = async (id, newStatus) => {
+    try {
+      const updated = await taskService.updateTask(id, { status: newStatus });
+      if (updated) {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, status: updated.status } : t));
       }
-      return t;
-    }));
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+    }
   };
 
-  const handleCompleteWork = (id) => {
-    setDashboardTickets(prev => prev.map(t => {
-      if (t.id === id) {
-        if (t.status === 'In Progress') {
-          setInProgressCount(c => Math.max(0, c - 1));
-        }
-        setCompletedTodayCount(c => c + 1);
-        setOpenIssuesCount(c => Math.max(0, c - 1));
-        return { ...t, status: 'Fixed' };
+  const handleAssignTask = async (taskId, assigneeName) => {
+    try {
+      const isAssigned = assigneeName && assigneeName !== 'Leave unassigned';
+      const updated = await taskService.updateTask(taskId, {
+        sendTo: assigneeName,
+        status: isAssigned ? 'Assigned' : 'New'
+      });
+      if (updated) {
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: updated.status, sendTo: updated.sendTo } : t));
       }
-      return t;
-    }));
+    } catch (err) {
+      console.error('Failed to assign task', err);
+    }
   };
 
-  const handlePartsRequired = (id) => {
-    setDashboardTickets(prev => prev.map(t => {
-      if (t.id === id) {
-        if (t.status === 'In Progress') {
-          setInProgressCount(c => Math.max(0, c - 1));
-        }
-        return { ...t, status: 'Waiting Parts' };
-      }
-      return t;
-    }));
-  };
+  // Actions for Dashboard & Issues Page
+  const handleStartWork = (id) => updateTaskStatus(id, 'In Progress');
+  const handleCompleteWork = (id) => updateTaskStatus(id, 'Completed');
+  const handlePartsRequired = (id) => updateTaskStatus(id, 'Waiting Parts');
 
-  // Actions for Issues Page
-  const handleStartIssueWork = (id) => {
-    setIssuesList(prev => prev.map(t => {
-      if (t.id === id) {
-        return { ...t, status: 'In Progress' };
-      }
-      return t;
-    }));
-  };
-
-  const handleCompleteIssueWork = (id) => {
-    setIssuesList(prev => prev.map(t => {
-      if (t.id === id) {
-        return { ...t, status: 'Fixed' };
-      }
-      return t;
-    }));
-  };
-
-  const handleIssuePartsRequired = (id) => {
-    setIssuesList(prev => prev.map(t => {
-      if (t.id === id) {
-        return { ...t, status: 'Waiting Parts' };
-      }
-      return t;
-    }));
-  };
+  const handleStartIssueWork = handleStartWork;
+  const handleCompleteIssueWork = handleCompleteWork;
+  const handleIssuePartsRequired = handlePartsRequired;
 
   // Filter Issues List based on sub-tabs
   const getFilteredIssues = () => {
-    if (issuesFilter === 'mine') return issuesList.filter(t => t.meta.includes('Peter Janssens'));
-    if (issuesFilter === 'urgent') return issuesList.filter(t => t.isUrgent);
-    if (issuesFilter === 'parts') return issuesList.filter(t => t.status === 'Waiting Parts');
-    if (issuesFilter === 'completed') return issuesList.filter(t => t.status === 'Fixed');
-    if (issuesFilter === 'open') return issuesList.filter(t => t.status !== 'Fixed');
-    return issuesList;
-  };
-
-  // Actions for Tasks View
-  const handleCompleteTask = (id) => {
-    setTasksList(prev => prev.map(t => {
-      if (t.id === id) {
-        return { ...t, status: 'Completed' };
-      }
-      return t;
-    }));
-  };
-
-  // Filter Tasks List based on sub-tabs
-  const getFilteredTasks = () => {
-    let result = tasksList;
-    if (tasksFilter === 'mine') result = result.filter(t => t.meta.includes('Peter Janssens'));
-    else if (tasksFilter === 'open') result = result.filter(t => t.status !== 'Completed');
-    else if (tasksFilter === 'completed') result = result.filter(t => t.status === 'Completed');
+    let result = tasks;
+    if (issuesFilter === 'mine') result = result.filter(t => t.meta.includes('Peter Janssens'));
+    else if (issuesFilter === 'urgent') result = result.filter(t => t.isUrgent);
+    else if (issuesFilter === 'parts') result = result.filter(t => t.status === 'Waiting Parts');
+    else if (issuesFilter === 'completed') result = result.filter(t => t.status === 'Fixed' || t.status === 'Completed');
+    else if (issuesFilter === 'open') result = result.filter(t => t.status !== 'Fixed' && t.status !== 'Completed');
     return result;
   };
 
+  // Actions for Tasks View
+  const handleCompleteTask = handleCompleteWork;
+
+  // Filter Tasks List based on sub-tabs
+  const getFilteredTasks = () => {
+    let result = tasks;
+    if (tasksFilter === 'mine') result = result.filter(t => t.meta.includes('Peter Janssens'));
+    else if (tasksFilter === 'open') result = result.filter(t => t.status !== 'Completed' && t.status !== 'Fixed');
+    else if (tasksFilter === 'completed') result = result.filter(t => t.status === 'Completed' || t.status === 'Fixed');
+    return result;
+  };
+
+
+
   // Submit Handler for New Task Modal
-  const submitNewTask = (e) => {
+  const submitNewTask = async (e) => {
     e.preventDefault();
     if (!taskForm.what.trim()) return;
 
-    const newTask = {
-      id: `task-${Date.now()}`,
-      room: taskForm.room,
-      title: taskForm.what,
-      priority: taskForm.priority,
-      desc: taskForm.detail || 'Manual task description.',
-      meta: `💬 ${taskForm.department} · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · due ${taskForm.due} · ${taskForm.sendTo}`,
-      status: 'In Progress'
-    };
-
-    setTasksList(prev => [...prev, newTask]);
-    setIsTaskModalOpen(false);
+    try {
+      const newTask = await taskService.createTask(taskForm);
+      setTasksList(prev => [newTask, ...prev]);
+      setIsTaskModalOpen(false);
+      setTaskForm({
+        what: '', detail: '', room: '', due: '', 
+        department: 'Maintenance', priority: 'Normal'
+      });
+    } catch (err) {
+      console.error('Failed to create task:', err);
+      alert('Failed to create task');
+    }
   };
 
-  // Submit Handler for New Issue Modal
-  const submitNewIssue = (e) => {
+  const submitNewIssue = async (e) => {
     e.preventDefault();
     if (!issueForm.what.trim()) return;
 
-    const isUrgent = issueForm.urgency === 'Urgent';
-    const isHigh = issueForm.urgency === 'High';
-    const isNormal = issueForm.urgency === 'Normal';
-    const isLow = issueForm.urgency === 'Low';
+    try {
+      const createdIssue = await taskService.createTask({
+        what: issueForm.what,
+        detail: issueForm.detail,
+        room: issueForm.room,
+        due: '',
+        department: 'Maintenance',
+        priority: issueForm.urgency
+      });
+      
+      const formattedIssue = {
+        ...createdIssue,
+        isUrgent: createdIssue.priority === 'Urgent',
+        isHigh: createdIssue.priority === 'High',
+        isNormal: createdIssue.priority === 'Normal',
+        isLow: createdIssue.priority === 'Low',
+        isMaintenance: true,
+        history: []
+      };
 
-    const newIssue = {
-      id: `MT-${119 + issuesList.length}`,
-      room: `Room ${issueForm.room}`,
-      isUrgent: isUrgent,
-      isHigh: isHigh,
-      isNormal: isNormal,
-      isLow: isLow,
-      status: 'In Progress',
-      isOutOfService: isUrgent,
-      title: issueForm.what,
-      desc: issueForm.detail || 'Radiator checks scheduled.',
-      meta: `${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · Front Office · Guest via WhatsApp · Peter Janssens`,
-      history: [
-        { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: 'accepted', text: 'Ticket opened via dashboard' }
-      ]
-    };
-
-    setIssuesList(prev => [...prev, newIssue]);
-    setOpenIssuesCount(c => c + 1);
-    setIsIssueModalOpen(false);
+      setTasks(prev => [formattedIssue, ...prev]);
+      setIsIssueModalOpen(false);
+      setIssueForm({ what: '', detail: '', room: '', urgency: 'Normal' });
+    } catch (err) {
+      console.error('Failed to create issue', err);
+      alert('Error creating issue. Please try again.');
+    }
   };
 
   return (
@@ -482,7 +320,7 @@ export const MaintenanceDashboard = () => {
               </div>
 
               <div className="bg-white rounded-3xl border border-[#E7E4DD] shadow-xs overflow-hidden divide-y divide-slate-100">
-                {dashboardTickets.map((ticket) => {
+                {tasks.filter(t => t.status !== 'Completed' && t.status !== 'Fixed').map((ticket) => {
                   const isFixed = ticket.status === 'Fixed';
 
                   return (
@@ -568,7 +406,7 @@ export const MaintenanceDashboard = () => {
                   issuesFilter === 'open' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
                 }`}
               >
-                Open <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'open' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>5</span>
+                Open <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'open' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.status !== 'Completed' && t.status !== 'Fixed').length}</span>
               </button>
               <button 
                 onClick={() => setIssuesFilter('mine')}
@@ -576,7 +414,7 @@ export const MaintenanceDashboard = () => {
                   issuesFilter === 'mine' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
                 }`}
               >
-                Mine <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'mine' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>2</span>
+                Mine <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'mine' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.meta.includes('Peter Janssens')).length}</span>
               </button>
               <button 
                 onClick={() => setIssuesFilter('urgent')}
@@ -584,7 +422,7 @@ export const MaintenanceDashboard = () => {
                   issuesFilter === 'urgent' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
                 }`}
               >
-                Urgent <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'urgent' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>1</span>
+                Urgent <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'urgent' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.isUrgent).length}</span>
               </button>
               <button 
                 onClick={() => setIssuesFilter('parts')}
@@ -592,7 +430,7 @@ export const MaintenanceDashboard = () => {
                   issuesFilter === 'parts' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
                 }`}
               >
-                Waiting Parts <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'parts' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>2</span>
+                Waiting Parts <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'parts' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.status === 'Waiting Parts').length}</span>
               </button>
               <button 
                 onClick={() => setIssuesFilter('completed')}
@@ -600,7 +438,7 @@ export const MaintenanceDashboard = () => {
                   issuesFilter === 'completed' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
                 }`}
               >
-                Completed <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'completed' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>1</span>
+                Completed <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'completed' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.filter(t => t.status === 'Completed' || t.status === 'Fixed').length}</span>
               </button>
               <button 
                 onClick={() => setIssuesFilter('all')}
@@ -608,7 +446,7 @@ export const MaintenanceDashboard = () => {
                   issuesFilter === 'all' ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] text-slate-650 hover:bg-slate-50'
                 }`}
               >
-                All <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'all' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>6</span>
+                All <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.2 font-mono ml-0.5 ${issuesFilter === 'all' ? 'bg-[#0b4227] text-white' : 'bg-slate-150 text-slate-600'}`}>{tasks.length}</span>
               </button>
             </div>
 
@@ -693,7 +531,7 @@ export const MaintenanceDashboard = () => {
                             Start work
                           </button>
                         )}
-                        {!isFixed && (
+                        {!isFixed && !isStaff && (
                           <button 
                             onClick={() => alert(`Update logged for ${t.id}`)}
                             className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
@@ -701,7 +539,19 @@ export const MaintenanceDashboard = () => {
                             Update
                           </button>
                         )}
-                        {!isFixed && (
+                        {!isFixed && !isStaff && (
+                          <select
+                            value={t.sendTo || 'Leave unassigned'}
+                            onChange={(e) => handleAssignTask(t.id, e.target.value)}
+                            className="px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 bg-white shadow-xs focus:outline-none cursor-pointer"
+                          >
+                            <option value="Leave unassigned">Assign...</option>
+                            {users.filter(u => u.role === 'Maintenance Staff').map(u => (
+                              <option key={u.id} value={u.name}>{u.name}</option>
+                            ))}
+                          </select>
+                        )}
+                        {!isFixed && !isStaff && (
                           <button 
                             onClick={() => handleIssuePartsRequired(t.id)}
                             className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
@@ -709,17 +559,17 @@ export const MaintenanceDashboard = () => {
                             Parts required
                           </button>
                         )}
-                        {!isFixed ? (
+                        {!isFixed && !isStaff ? (
                           <button 
                             onClick={() => handleCompleteIssueWork(t.id)}
                             className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
                           >
                             Complete
                           </button>
-                        ) : (
+                        ) : isFixed ? (
                           <span className="text-xs font-bold text-emerald-600 px-4 py-1.5 font-mono select-none">Fixed ✓</span>
-                        )}
-                        {!isFixed && (
+                        ) : null}
+                        {!isFixed && !isStaff && (
                           <button 
                             onClick={() => alert(`Escalated ticket ${t.id}`)}
                             className="px-3.5 py-1.5 bg-white hover:bg-red-50 border border-red-200/60 text-red-655 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs flex items-center gap-1"
@@ -818,13 +668,6 @@ export const MaintenanceDashboard = () => {
                   Anything that is not a room fault but still needs doing — ordering parts, booking an external technician, rechecking a repair.
                 </p>
               </div>
-              <button 
-                onClick={() => setIsTaskModalOpen(true)}
-                className="px-5 py-2.5 bg-[#0F5132] hover:bg-[#0b4227] text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0 font-sans flex items-center gap-1.5"
-              >
-                <Plus size={14} />
-                <span>New task</span>
-              </button>
             </div>
 
             {/* 4 Task KPI Cards Row */}
@@ -942,13 +785,26 @@ export const MaintenanceDashboard = () => {
                     </div>
 
                     {/* Status Badge clickable action to trigger completion */}
-                    <div className="shrink-0 font-sans cursor-pointer" onClick={() => handleCompleteTask(task.id)}>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${
+                    <div className="shrink-0 font-sans flex flex-col items-end gap-2">
+                      <span onClick={() => handleCompleteTask(task.id)} className={`cursor-pointer inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border uppercase tracking-wider font-mono ${
                         isCompleted ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                         {task.status}
                       </span>
+                      
+                      {!isCompleted && !isStaff && (
+                        <select
+                          value={task.sendTo || 'Leave unassigned'}
+                          onChange={(e) => handleAssignTask(task.id, e.target.value)}
+                          className="px-2 py-1 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 bg-white shadow-xs focus:outline-none cursor-pointer"
+                        >
+                          <option value="Leave unassigned">Assign to...</option>
+                          {users.filter(u => u.role === 'Maintenance Staff').map(u => (
+                            <option key={u.id} value={u.name}>{u.name}</option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                   </div>
@@ -1082,20 +938,6 @@ export const MaintenanceDashboard = () => {
                     <option value="Low">Low</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Send to */}
-              <div className="space-y-1 text-left">
-                <label className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans block">Send to</label>
-                <select 
-                  value={taskForm.sendTo}
-                  onChange={(e) => setTaskForm({ ...taskForm, sendTo: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:border-[#105F39] text-slate-700 font-sans cursor-pointer"
-                >
-                  <option value="Leave unassigned">Leave unassigned</option>
-                  <option value="Peter Janssens">Peter Janssens</option>
-                  <option value="Milan Novak">Milan Novak</option>
-                </select>
               </div>
 
               <p className="text-[10px] text-slate-400 font-medium font-sans leading-relaxed text-left pt-1">

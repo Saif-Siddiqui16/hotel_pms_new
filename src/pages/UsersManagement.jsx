@@ -11,6 +11,7 @@ import {
   MoreVertical,
   Trash2,
   Edit,
+  Eye,
   Building2
 } from 'lucide-react';
 import { userService } from '../services/userService';
@@ -21,12 +22,25 @@ export const UsersManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  // Form states
+  // Form states (Add)
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Front Office');
+  const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [role, setRole] = useState('Front Office Manager');
   const [status, setStatus] = useState('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form states (Edit)
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editUserId, setEditUserId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editPhoneNumber, setEditPhoneNumber] = useState('');
+  const [editRole, setEditRole] = useState('Front Office Manager');
+  const [editStatus, setEditStatus] = useState('Active');
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -40,13 +54,75 @@ export const UsersManagement = () => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const newUser = await userService.createUser({ name, email, role, status });
-    setUsers(prev => [newUser, ...prev]);
-    setIsSubmitting(false);
-    setShowAddModal(false);
-    setName('');
-    setEmail('');
-    setRole('Front Office');
+    const payload = { name, role, status };
+    if (role.includes('Manager')) {
+      payload.email = email;
+      payload.password = password;
+    } else {
+      payload.phoneNumber = phoneNumber;
+    }
+    
+    try {
+      const newUser = await userService.createUser(payload);
+      setUsers(prev => [newUser, ...prev]);
+      setShowAddModal(false);
+      setName('');
+      setEmail('');
+      setPassword('');
+      setPhoneNumber('');
+      setRole('Front Office Manager');
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      alert(error.response?.data?.message || error.message || 'Failed to create user');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditModal = (user) => {
+    setEditUserId(user.id);
+    setEditName(user.name);
+    setEditEmail(user.email || '');
+    setEditPhoneNumber(user.phoneNumber || '');
+    setEditRole(user.role);
+    setEditStatus(user.status);
+    setEditPassword('');
+    setShowEditModal(true);
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setIsEditing(true);
+    
+    const updates = {
+      name: editName,
+      role: editRole,
+      status: editStatus
+    };
+    
+    if (editRole.includes('Manager')) {
+      updates.email = editEmail;
+      updates.phoneNumber = null; // Clear if role changed
+      if (editPassword.trim()) {
+        updates.password = editPassword;
+      }
+    } else {
+      updates.phoneNumber = editPhoneNumber;
+      updates.email = null; // Clear if role changed
+    }
+
+    try {
+      const updatedUser = await userService.updateUser(editUserId, updates);
+      if (updatedUser) {
+        setUsers(prev => prev.map(u => u.id === editUserId ? { ...u, ...updatedUser } : u));
+      }
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      alert(error.response?.data?.message || error.message || 'Failed to update user');
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handleDeleteUser = async (id) => {
@@ -114,7 +190,7 @@ export const UsersManagement = () => {
               <tr className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
                 <th className="py-3.5 px-4">User</th>
                 <th className="py-3.5 px-4">Role</th>
-                <th className="py-3.5 px-4">Email Address</th>
+                <th className="py-3.5 px-4">Contact Info</th>
                 <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4">Joined Date</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -137,8 +213,8 @@ export const UsersManagement = () => {
                   </td>
                   <td className="py-3.5 px-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold ${
-                      user.role === 'Manager' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-                      user.role === 'Front Office' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                      user.role.includes('Manager') ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                      user.role.includes('Front Office') ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                       user.role.includes('Housekeeping') ? 'bg-amber-100 text-amber-700 border border-amber-200' :
                       'bg-rose-100 text-rose-700 border border-rose-200'
                     }`}>
@@ -146,7 +222,7 @@ export const UsersManagement = () => {
                     </span>
                   </td>
                   <td className="py-3.5 px-4 text-slate-600 font-mono">
-                    {user.email}
+                    {user.role.includes('Manager') ? (user.email || 'No email') : (user.phoneNumber || 'No phone')}
                   </td>
                   <td className="py-3.5 px-4">
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -158,13 +234,29 @@ export const UsersManagement = () => {
                     {user.joinedDate}
                   </td>
                   <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
-                      title="Remove User"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all cursor-pointer"
+                        title="View User"
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-all cursor-pointer"
+                        title="Edit User"
+                      >
+                        <Edit size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
+                        title="Remove User"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -201,17 +293,45 @@ export const UsersManagement = () => {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 block">Work Email</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="sarah@mercierhotel.com"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
-                />
-              </div>
+              {role.includes('Manager') ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 block">Work Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="sarah@mercierhotel.com"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 block">Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter a strong password"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 block">WhatsApp Phone Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                  />
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 block">Operational Role</label>
@@ -220,12 +340,11 @@ export const UsersManagement = () => {
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
                 >
-                  <option value="Hotel Admin">Hotel Admin</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Front Office">Front Office</option>
+                  <option value="General Manager">General Manager</option>
+                  <option value="Front Office Manager">Front Office Manager</option>
                   <option value="Housekeeping Manager">Housekeeping Manager</option>
-                  <option value="Housekeeping Staff">Housekeeping Staff</option>
                   <option value="Maintenance Manager">Maintenance Manager</option>
+                  <option value="Housekeeping Staff">Housekeeping Staff</option>
                   <option value="Maintenance Staff">Maintenance Staff</option>
                 </select>
               </div>
@@ -264,6 +383,121 @@ export const UsersManagement = () => {
         </div>
       )}
 
+      {/* Edit User Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-5 relative">
+            
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-lg font-bold text-slate-900">Edit User Details</h3>
+              <button 
+                onClick={() => setShowEditModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 block">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                />
+              </div>
+
+              {editRole.includes('Manager') ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 block">Work Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 block">Password (Leave blank to keep current)</label>
+                    <input
+                      type="password"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="Enter new password to change"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 block">WhatsApp Phone Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editPhoneNumber}
+                    onChange={(e) => setEditPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 block">Operational Role</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                >
+                  <option value="General Manager">General Manager</option>
+                  <option value="Front Office Manager">Front Office Manager</option>
+                  <option value="Housekeeping Manager">Housekeeping Manager</option>
+                  <option value="Maintenance Manager">Maintenance Manager</option>
+                  <option value="Housekeeping Staff">Housekeeping Staff</option>
+                  <option value="Maintenance Staff">Maintenance Staff</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 block">Account Status</label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Pending">Pending Invite</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div className="pt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditing}
+                  className="flex-1 py-2.5 bg-[#0B1020] hover:bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-70"
+                >
+                  {isEditing ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
       {/* User Details Modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -276,7 +510,9 @@ export const UsersManagement = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">{selectedUser.name}</h3>
-                  <p className="text-xs text-slate-400 font-mono">{selectedUser.email}</p>
+                  <p className="text-xs text-slate-400 font-mono">
+                    {selectedUser.role.includes('Manager') ? (selectedUser.email || 'No email') : (selectedUser.phoneNumber || 'No phone')}
+                  </p>
                 </div>
               </div>
               <button 
@@ -295,23 +531,7 @@ export const UsersManagement = () => {
                 </div>
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Property</span>
-                  <span className="font-bold text-slate-900 block mt-0.5">Mercier Hotel</span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-xs font-bold text-slate-700 block mb-2">Role Permissions Summary</span>
-                <div className="space-y-2 text-xs font-medium text-slate-700">
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
-                    <span>Operational Dashboard</span>
-                    <span className="text-emerald-600 font-bold">Granted ✓</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
-                    <span>AI Guest Conversations</span>
-                    <span className={`font-bold ${selectedUser.role === 'Manager' || selectedUser.role === 'Front Office' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      {selectedUser.role === 'Manager' || selectedUser.role === 'Front Office' ? 'Granted ✓' : 'Disabled (No AI)'}
-                    </span>
-                  </div>
+                  <span className="font-bold text-slate-900 block mt-0.5">{selectedUser.hotelName || 'Unknown Hotel'}</span>
                 </div>
               </div>
             </div>

@@ -37,44 +37,6 @@ const Login = () => {
   const quickFillCredentials = (quickEmail, quickPass) => {
     setEmail(quickEmail);
     setPassword(quickPass);
-    setIsLoading(true);
-    setTimeout(() => {
-      const lowerEmail = quickEmail.toLowerCase();
-      const isSuperAdmin = lowerEmail.includes('superadmin') || lowerEmail.includes('super');
-      const isHousekeeping = lowerEmail.includes('housekeeping') || lowerEmail.includes('hk');
-      const isMaintenance = lowerEmail.includes('maintenance') || lowerEmail.includes('mnt');
-      const isFrontOffice = lowerEmail.includes('reception') || lowerEmail.includes('frontdesk') || lowerEmail.includes('front') || lowerEmail.includes('anna');
-      const isAdmin = lowerEmail.includes('admin') || lowerEmail.includes('manager') || lowerEmail.includes('john');
-      
-      let mapped = ROLES.MANAGER;
-      let redir = '/app';
-
-      if (isSuperAdmin) {
-        mapped = ROLES.SUPER_ADMIN;
-        redir = '/app';
-      } else if (isHousekeeping) {
-        mapped = ROLES.HOUSEKEEPING_MANAGER;
-        redir = '/app';
-      } else if (isMaintenance) {
-        mapped = ROLES.MAINTENANCE_MANAGER;
-        redir = '/app';
-      } else if (isFrontOffice) {
-        mapped = ROLES.FRONT_OFFICE;
-        redir = '/app';
-      } else if (isAdmin) {
-        mapped = ROLES.MANAGER;
-        redir = '/app';
-      }
-
-      setIsAuthenticated(true, {
-        name: isSuperAdmin ? 'Super Admin' : (isHousekeeping ? 'Elena (HK Manager)' : (isMaintenance ? 'Peter (Maint Manager)' : (isFrontOffice ? 'Anna (Front Office)' : 'John (Manager)'))),
-        email: quickEmail,
-        role: mapped,
-        property: isSuperAdmin ? 'Global Control' : 'Mercier Hotel'
-      });
-      setIsLoading(false);
-      navigate(redir);
-    }, 300);
   };
 
   const handleLogin = async (e) => {
@@ -91,7 +53,7 @@ const Login = () => {
       const data = await res.json();
       
       if (data.success && data.data && data.data.user) {
-        localStorage.setItem('autopilot_token', data.data.accessToken);
+        sessionStorage.setItem('autopilot_token', data.data.accessToken);
         const userRole = data.data.user.role;
         let roleMapped = ROLES.PLATFORM_OPERATOR;
         let routeRedirect = '/app';
@@ -102,14 +64,19 @@ const Login = () => {
         } else if (userRole === 'Hotel Admin') {
           roleMapped = ROLES.HOTEL_ADMIN;
           routeRedirect = '/app';
+        } else if (userRole === 'Manager') {
+          roleMapped = ROLES.MANAGER;
+          routeRedirect = '/app';
         } else if (userRole === 'Operator' || userRole === 'platform_operator') {
           roleMapped = ROLES.PLATFORM_OPERATOR;
           routeRedirect = '/app';
         } else if (userRole === 'Front Desk' || userRole === 'front_office' || userRole === 'Front Office') {
           roleMapped = ROLES.FRONT_OFFICE;
           routeRedirect = '/app';
-        } else if (userRole === 'Housekeeping' || userRole === 'Housekeeping Manager') {
+        } else if (userRole === 'Housekeeping Manager') {
           roleMapped = ROLES.HOUSEKEEPING_MANAGER;
+        } else if (userRole === 'Housekeeping' || userRole === 'Housekeeping Staff') {
+          roleMapped = ROLES.HOUSEKEEPING_STAFF;
           routeRedirect = '/app';
         } else if (userRole === 'Maintenance' || userRole === 'Maintenance Manager') {
           roleMapped = ROLES.MAINTENANCE_MANAGER;
@@ -121,54 +88,21 @@ const Login = () => {
 
         setIsAuthenticated(true, {
           ...data.data.user,
+          originalRole: data.data.user.role,
           role: roleMapped
         });
         setIsLoading(false);
         navigate(routeRedirect);
         return;
+      } else {
+        alert(data.message || 'Login failed. Please check your credentials.');
+        setIsLoading(false);
       }
     } catch (err) {
-      console.warn('Backend authentication endpoint unseeded or unreachable, using demo authorization handshake:', err);
-    }
-
-    // Fallback simulation if backend offline
-    setTimeout(() => {
-      const lowerEmail = email.toLowerCase();
-      const isSuperAdmin = lowerEmail.includes('superadmin') || lowerEmail.includes('super');
-      const isHousekeeping = lowerEmail.includes('housekeeping') || lowerEmail.includes('hk');
-      const isMaintenance = lowerEmail.includes('maintenance') || lowerEmail.includes('mnt');
-      const isFrontOffice = lowerEmail.includes('reception') || lowerEmail.includes('frontdesk') || lowerEmail.includes('front') || lowerEmail.includes('anna');
-      const isAdmin = lowerEmail.includes('admin') || lowerEmail.includes('manager') || lowerEmail.includes('john');
-      
-      let mapped = ROLES.MANAGER;
-      let redir = '/app';
-
-      if (isSuperAdmin) {
-        mapped = ROLES.SUPER_ADMIN;
-        redir = '/app';
-      } else if (isHousekeeping) {
-        mapped = ROLES.HOUSEKEEPING_MANAGER;
-        redir = '/app';
-      } else if (isMaintenance) {
-        mapped = ROLES.MAINTENANCE_MANAGER;
-        redir = '/app';
-      } else if (isFrontOffice) {
-        mapped = ROLES.FRONT_OFFICE;
-        redir = '/app';
-      } else if (isAdmin) {
-        mapped = ROLES.MANAGER;
-        redir = '/app';
-      }
-
-      setIsAuthenticated(true, {
-        name: isSuperAdmin ? 'Super Admin' : (isHousekeeping ? 'Elena (HK Manager)' : (isMaintenance ? 'Peter (Maint Manager)' : (isFrontOffice ? 'Anna (Front Office)' : 'John (Manager)'))),
-        email: email || 'admin@grandhotel.ai',
-        role: mapped,
-        property: isSuperAdmin ? 'Global Control' : 'Mercier Hotel'
-      });
+      console.error('Backend authentication error:', err);
+      alert('Unable to connect to the server. Please try again later.');
       setIsLoading(false);
-      navigate(redir);
-    }, 800);
+    }
   };
 
   const handleForgotPassword = async (e) => {

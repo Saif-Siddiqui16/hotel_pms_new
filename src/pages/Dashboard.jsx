@@ -79,7 +79,7 @@ const ManagerDashboardView = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/stats/dashboard`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('autopilot_token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
         }
       });
       const data = await res.json();
@@ -120,7 +120,7 @@ const ManagerDashboardView = () => {
   };
 
   const handleEscalateConversation = () => {
-    triggerToast("⚠️ Conversation escalated to Human Assistance Queue!");
+    triggerToast("âš ï¸ Conversation escalated to Human Assistance Queue!");
     setTimeout(() => navigate('/app/takeover-queue'), 1000);
   };
 
@@ -194,7 +194,7 @@ const ManagerDashboardView = () => {
               <div className="text-3xl font-extrabold text-slate-900 font-mono mt-1">{briefingData?.arrivals || 24}</div>
             </div>
             <div className="w-12 h-12 bg-purple-50 text-[#6D4AFF] rounded-2xl flex items-center justify-center text-xl shadow-sm">
-              🏨
+              ðŸ¨
             </div>
           </div>
 
@@ -238,7 +238,7 @@ const ManagerDashboardView = () => {
               <span className="text-[10px] text-rose-500 font-bold">Needs Staff Attention</span>
             </div>
             <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl shadow-sm">
-              ⚠️
+              âš ï¸
             </div>
           </div>
         </div>
@@ -448,7 +448,7 @@ const ManagerDashboardView = () => {
                 onClick={() => navigate('/app/front-office')}
                 className="p-2.5 bg-slate-50 hover:bg-purple-50 hover:text-[#6D4AFF] rounded-xl border border-slate-200 text-slate-700 transition-colors text-left flex items-center justify-between cursor-pointer"
               >
-                <span>🏨 Front Office</span>
+                <span>ðŸ¨ Front Office</span>
                 <span className="text-[10px] text-slate-400 font-normal">Check-in & Guests →</span>
               </button>
               <button 
@@ -477,6 +477,18 @@ const ManagerDashboardView = () => {
 };
 
 const FrontOfficeDashboardView = () => {
+  const { rooms = [], bookings = [], tasks = [], whatsappLogs = [] } = useApp();
+
+  const arrivalsCount = bookings.filter(b => b.status === 'confirmed').length;
+  const departuresCount = bookings.filter(b => b.status === 'IN_HOUSE').length;
+  const roomsReadyCount = rooms.filter(r => r.status === 'Ready' || r.status === 'Inspected').length;
+  const openRequestsCount = tasks.filter(t => t.status !== 'Completed' && t.department !== 'Housekeeping' && t.department !== 'Maintenance').length;
+  const vipArrivalsCount = bookings.filter(b => b.status === 'confirmed' && b.isVip).length;
+  const escalatedCount = tasks.filter(t => t.isEscalated || t.priority === 'High').length;
+  
+  const priorityTasks = tasks.filter(t => t.priority === 'High' || t.isEscalated).slice(0, 6);
+  const pendingArrivals = bookings.filter(b => b.status === 'confirmed').slice(0, 5);
+
   return (
     <div className="h-full overflow-y-auto bg-[#F7F6F3] w-full text-left selection:bg-emerald-950 selection:text-emerald-100 font-sans">
       
@@ -503,13 +515,13 @@ const FrontOfficeDashboardView = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Arrivals</span>
-                <div className="text-3xl font-extrabold text-slate-900 font-mono">24</div>
+                <div className="text-3xl font-extrabold text-slate-900 font-mono">{arrivalsCount}</div>
               </div>
               <div className="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                 <LogIn className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-[10px] font-bold text-emerald-600 mt-2 block">3 early</span>
+            <span className="text-[10px] font-bold text-emerald-600 mt-2 block">0 early</span>
           </div>
 
           {/* Departures */}
@@ -517,13 +529,13 @@ const FrontOfficeDashboardView = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Departures</span>
-                <div className="text-3xl font-extrabold text-slate-900 font-mono">18</div>
+                <div className="text-3xl font-extrabold text-slate-900 font-mono">{departuresCount}</div>
               </div>
               <div className="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
                 <LogOut className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-[10px] font-bold text-amber-600 mt-2 block">4 late checkouts</span>
+            <span className="text-[10px] font-bold text-amber-600 mt-2 block">0 late checkouts</span>
           </div>
 
           {/* Rooms ready */}
@@ -531,13 +543,13 @@ const FrontOfficeDashboardView = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Rooms ready</span>
-                <div className="text-3xl font-extrabold text-slate-900 font-mono">5/18</div>
+                <div className="text-3xl font-extrabold text-slate-900 font-mono">{roomsReadyCount}/{rooms.length}</div>
               </div>
               <div className="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
                 <Bed className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-[10px] font-bold text-amber-600 mt-2 block">5 arrivals waiting</span>
+            <span className="text-[10px] font-bold text-amber-600 mt-2 block">{Math.max(0, arrivalsCount - roomsReadyCount)} arrivals waiting</span>
           </div>
 
           {/* Open requests */}
@@ -545,7 +557,7 @@ const FrontOfficeDashboardView = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Open requests</span>
-                <div className="text-3xl font-extrabold text-slate-900 font-mono">2</div>
+                <div className="text-3xl font-extrabold text-slate-900 font-mono">{openRequestsCount}</div>
               </div>
               <div className="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-4 h-4" />
@@ -559,13 +571,13 @@ const FrontOfficeDashboardView = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">VIP arrivals</span>
-                <div className="text-3xl font-extrabold text-slate-900 font-mono">2</div>
+                <div className="text-3xl font-extrabold text-slate-900 font-mono">{vipArrivalsCount}</div>
               </div>
               <div className="w-7 h-7 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
                 <Crown className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-[10px] font-bold text-indigo-600 mt-2 block">1st 14:00</span>
+            <span className="text-[10px] font-bold text-indigo-600 mt-2 block"></span>
           </div>
 
           {/* Escalated */}
@@ -573,7 +585,7 @@ const FrontOfficeDashboardView = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold text-red-500 uppercase tracking-wider block">Escalated</span>
-                <div className="text-3xl font-extrabold text-red-600 font-mono">2</div>
+                <div className="text-3xl font-extrabold text-red-600 font-mono">{escalatedCount}</div>
               </div>
               <div className="w-7 h-7 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-4 h-4" />
@@ -600,52 +612,46 @@ const FrontOfficeDashboardView = () => {
           {/* Body */}
           <div className="p-6 space-y-6">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-              Two rooms decide your morning: 401 is ready for the early arrival, 307 is not ready for the VIP.
+              {arrivalsCount === 0 ? "You're all caught up. The dashboard is quiet right now." : `There are ${arrivalsCount} arrivals today and ${Math.max(0, arrivalsCount - roomsReadyCount)} waiting on rooms.`}
             </h2>
             
             {/* 2 columns of lists */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              {/* Col 1 */}
               <div className="space-y-4">
                 <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
                   <span className="text-emerald-500 font-bold text-sm mt-0.5">•</span>
-                  <span>24 arrivals today. 5 rooms are released and 5 arrivals are still waiting on housekeeping.</span>
+                  <span>{arrivalsCount} arrivals today. {roomsReadyCount} rooms are ready and {Math.max(0, arrivalsCount - roomsReadyCount)} arrivals are still waiting on housekeeping.</span>
                 </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
-                  <span className="text-emerald-500 font-bold text-sm mt-0.5">•</span>
-                  <span>Yuki Tanabe (VIP, 6th stay) arrives at 14:00. Amélie is confirming a 20:00 table at De Kleine Zavel.</span>
-                </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
-                  <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
-                  <span>Hendrik Vos in 205 is waiting for an answer on a 15:00 checkout — occupancy says 14:00 is safer.</span>
-                  <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold font-mono ml-1.5">before 11:30</span>
-                </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
-                  <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
-                  <span>Priya Raghavan's card authorisation failed twice — ask for a new card at check-in.</span>
-                  <span className="inline-block px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-bold font-mono ml-1.5">ASK</span>
-                </div>
+                {vipArrivalsCount > 0 && (
+                  <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
+                    <span className="text-emerald-500 font-bold text-sm mt-0.5">•</span>
+                    <span>{vipArrivalsCount} VIP arrivals expected today. Please check their room status.</span>
+                  </div>
+                )}
+                {priorityTasks.length > 0 && priorityTasks.map((t, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
+                    <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
+                    <span>Task for {t.room || 'General'}: {t.title}</span>
+                    <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold font-mono ml-1.5">{t.status}</span>
+                  </div>
+                ))}
               </div>
               
-              {/* Col 2 */}
               <div className="space-y-4">
-                <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
-                  <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
-                  <span>Room 401 was released at 12:26 — Grace Okonkwo's 13:00 early arrival can check in immediately.</span>
-                  <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold font-mono ml-1.5">12:26</span>
-                </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
-                  <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
-                  <span>307 is out of service with a shower leak and it is the VIP room. Milan expects to finish within 30 minutes.</span>
-                  <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold font-mono ml-1.5">MT-115</span>
-                </div>
+                {roomsReadyCount > 0 ? (
+                  <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
+                    <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
+                    <span>{roomsReadyCount} rooms are ready for check-in immediately.</span>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed flex-wrap items-center">
+                    <span className="text-emerald-500 font-bold text-sm mt-0.5 mr-1">•</span>
+                    <span>No rooms are currently ready. Check with Housekeeping for updates.</span>
+                  </div>
+                )}
                 <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
                   <span className="text-emerald-500 font-bold text-sm mt-0.5">•</span>
-                  <span>The AI answered 63 messages so far and is holding 5 conversations without you.</span>
-                </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed">
-                  <span className="text-emerald-500 font-bold text-sm mt-0.5">•</span>
-                  <span>Baby cot for 208 and the anniversary package for 310 are both in housekeeping's list.</span>
+                  <span>The AI answered {whatsappLogs.length} messages so far today.</span>
                 </div>
               </div>
             </div>
@@ -668,7 +674,7 @@ const FrontOfficeDashboardView = () => {
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div className="space-y-0.5">
                   <h2 className="text-base font-bold text-slate-900">Priority tasks</h2>
-                  <p className="text-[11px] text-slate-500">Yours first — housekeeping and maintenance have their own lists</p>
+                  <p className="text-[11px] text-slate-500">Yours first â€” housekeeping and maintenance have their own lists</p>
                 </div>
                 <button className="px-3.5 py-1 bg-white border border-slate-200 text-slate-700 rounded-full text-xs font-bold shadow-xs hover:bg-slate-50 transition-all cursor-pointer">
                   All tasks
@@ -677,143 +683,33 @@ const FrontOfficeDashboardView = () => {
 
               {/* Tasks List */}
               <div className="space-y-4">
-                {/* Task 1: 205 */}
-                <div className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
-                    205
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
-                      <h3 className="text-xs font-bold text-slate-950 font-sans">Late checkout 15:00 — decision needed</h3>
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-200/60 text-slate-600 text-[9px] font-black uppercase tracking-wider">Normal</span>
-                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-black uppercase tracking-wider">• New</span>
+                {priorityTasks.length > 0 ? priorityTasks.map((task) => (
+                  <div key={task.id} className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
+                    <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
+                      {task.room || 'NA'}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between items-start flex-wrap gap-2">
+                        <h3 className="text-xs font-bold text-slate-950 font-sans">{task.title}</h3>
+                        <div className="flex gap-1.5">
+                          {task.priority === 'High' && <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black uppercase tracking-wider">High</span>}
+                          {task.isEscalated && <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black uppercase tracking-wider">âš ï¸ Escalated</span>}
+                          {!task.isEscalated && task.priority !== 'High' && <span className="px-2 py-0.5 rounded-md bg-slate-200/60 text-slate-600 text-[9px] font-black uppercase tracking-wider">{task.priority || 'Normal'}</span>}
+                          <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-black uppercase tracking-wider">• {task.status}</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        {task.desc || 'No description provided.'}
+                      </p>
+                      <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
+                        <span className="flex items-center gap-1">💬 System • {new Date(task.createdAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span>Assignee: {task.sendTo || 'Unassigned'}</span>
                       </div>
                     </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                      Guest asked for 15:00. 24 arrivals today; rooms are tight but housekeeping says okay if needed.
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
-                      <span className="flex items-center gap-1">💬 Guest WhatsApp • 01:19</span>
-                      <span>due 11:30 • Hendrik Vos • Amélie Dupret</span>
-                    </div>
                   </div>
-                </div>
-
-                {/* Task 2: 307 */}
-                <div className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
-                    307
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
-                      <h3 className="text-xs font-bold text-slate-950 font-sans">VIP preparation — 307</h3>
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black uppercase tracking-wider">High</span>
-                        <span className="px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-100 text-[9px] font-black uppercase tracking-wider">• In Progress</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                      Still water, fruit plate, high floor away from elevator. Guest requested anniversary package.
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
-                      <span className="flex items-center gap-1">🏨 PMS event • 07:15</span>
-                      <span>due 14:00 • Yuki Tanabe • Amélie Dupret</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Task 3: 411 */}
-                <div className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
-                    411
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
-                      <h3 className="text-xs font-bold text-slate-950 font-sans">Approve €47.60 credit note</h3>
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black uppercase tracking-wider">High</span>
-                        <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black uppercase tracking-wider">⚠️ Escalated</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                      Duplicate city tax €10.80 and minibar charge discrepancy from last night's invoice.
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
-                      <span className="flex items-center gap-1">✉️ Guest Email • 06:33</span>
-                      <span>due 17:00 • Nadia Haddad • James Verhaeghe</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Task 4: 212 */}
-                <div className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
-                    212
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
-                      <h3 className="text-xs font-bold text-slate-950 font-sans">Taxi to Antwerpen-Centraal, 15:45</h3>
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-200/60 text-slate-600 text-[9px] font-black uppercase tracking-wider">Normal</span>
-                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-black uppercase tracking-wider">• New</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                      Guest requested taxi booking for 2 people with medium luggage. Hotel preferred provider.
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
-                      <span className="flex items-center gap-1">💬 Guest WhatsApp • 07:17</span>
-                      <span>due 15:30 • Daniel Weits • Unassigned</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Task 5: 208 */}
-                <div className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
-                    208
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
-                      <h3 className="text-xs font-bold text-slate-950 font-sans">Missing payment — card declined on 208</h3>
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black uppercase tracking-wider">High</span>
-                        <span className="px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-100 text-[9px] font-black uppercase tracking-wider">✓ Assigned</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                      Pre-authorisation failed twice. Guest was sent payment link via SMS but hasn't responded.
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
-                      <span className="flex items-center gap-1">🏨 PMS event • 06:48</span>
-                      <span>due 11:30 • Priya Raghavan • Amélie Dupret</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Task 6: 310 */}
-                <div className="flex gap-4 p-4 bg-slate-50/40 rounded-2xl border border-slate-200/50 hover:shadow-xs transition-all">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-800 text-sm shrink-0">
-                    310
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start flex-wrap gap-2">
-                      <h3 className="text-xs font-bold text-slate-950 font-sans">Room move request — 302 to 310</h3>
-                      <div className="flex gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black uppercase tracking-wider">High</span>
-                        <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black uppercase tracking-wider">⚠️ Escalated</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                      Pending manager decision on guest complaining about AC noise. Target 310 ready by 12:00.
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pt-1 border-t border-dashed border-slate-200 font-mono">
-                      <span className="flex items-center gap-1">🤖 AI Detection • 09:53</span>
-                      <span>Clara Bertrand • James Verhaeghe</span>
-                    </div>
-                  </div>
-                </div>
+                )) : (
+                  <div className="text-sm text-slate-400 p-4 text-center">No priority tasks at this moment.</div>
+                )}
               </div>
             </div>
             
@@ -825,107 +721,29 @@ const FrontOfficeDashboardView = () => {
               </div>
 
               <div className="space-y-2">
-                {/* 401 */}
-                <div className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
-                      401
-                    </span>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800">Arrival 13:00</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">Departure • Maria Silva • updated 12:26</p>
+                {pendingArrivals.length > 0 ? pendingArrivals.map((booking) => {
+                  const r = rooms.find(room => room.id === booking.room);
+                  const isReady = r?.status === 'Ready' || r?.status === 'Inspected';
+                  return (
+                    <div key={booking.id} className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
+                      <div className="flex items-center gap-4">
+                        <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
+                          {booking.room || 'NA'}
+                        </span>
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-slate-800">Arrival • {booking.guestName}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">{booking.checkIn} → {booking.checkOut}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5 ${isReady ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isReady ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                        {r?.status || 'Unknown'}
+                      </span>
                     </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                    Inspected
-                  </span>
-                </div>
-
-                {/* 208 */}
-                <div className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
-                      208
-                    </span>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800">Arrival 14:00</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">Departure • Inês Duarte • updated 08:50</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-100 text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                    Dirty
-                  </span>
-                </div>
-
-                {/* 307 */}
-                <div className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
-                      307
-                    </span>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800 font-sans">Arrival 14:00 VIP</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">VIP Arrival • Inês Duarte • updated 09:11</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-100 text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
-                    Maintenance
-                  </span>
-                </div>
-
-                {/* 207 */}
-                <div className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
-                      207
-                    </span>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800">Arrival 15:00</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">Departure • Maria Silva • updated 09:07</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-100 text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
-                    Maintenance
-                  </span>
-                </div>
-
-                {/* 201 */}
-                <div className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
-                      201
-                    </span>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800">Arrival 16:00</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">Departure • Maria Silva • updated 09:44</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-yellow-50 text-yellow-700 border border-yellow-100 text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-                    Cleaning
-                  </span>
-                </div>
-
-                {/* 405 */}
-                <div className="bg-white p-4 rounded-2xl border border-[#E7E4DD] flex justify-between items-center hover:shadow-xs hover:border-slate-350 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center font-bold text-slate-800 text-xs font-mono">
-                      405
-                    </span>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800">Arrival 17:30</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">Departure • Maria Silva • updated 09:40</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-100 text-[9px] font-black uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                    Dirty
-                  </span>
-                </div>
+                  );
+                }) : (
+                  <div className="text-sm text-slate-400 p-4 text-center">No arrivals pending at this moment.</div>
+                )}
               </div>
             </div>
           </div>
@@ -939,146 +757,19 @@ const FrontOfficeDashboardView = () => {
               </div>
 
               <div className="space-y-3.5 max-h-[660px] overflow-y-auto pr-1">
-                {/* 1 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-amber-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <Wrench className="w-3.5 h-3.5 text-amber-600" />
+                {whatsappLogs.length > 0 ? whatsappLogs.map(log => (
+                  <div key={log.id} className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
+                    <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-slate-800">{log.text}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">{log.time} • {log.source}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">MT-110 — Waiting Parts</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">11:14 • 310</p>
-                  </div>
-                </div>
-                {/* 2 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-rose-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Escalated 302 — compensation requested by Clara Bertrand</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:53 • WhatsApp</p>
-                  </div>
-                </div>
-                {/* 3 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <svg className="w-3.5 h-3.5 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Offered breakfast and airport transfer to Sofia Marchetti</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:47 • €120.00 proposed</p>
-                  </div>
-                </div>
-                {/* 4 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Maria Silva started cleaning 201</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:44 • WhatsApp</p>
-                  </div>
-                </div>
-                {/* 5 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Checked live availability for 22–24 Aug and recommended the Deluxe King</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:33 • Voice</p>
-                  </div>
-                </div>
-                {/* 6 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <svg className="w-3.5 h-3.5 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Late checkout decision for 205 sent to Front Office</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:21 • Task-L</p>
-                  </div>
-                </div>
-                {/* 7 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Taxi booked for 212 at 15:45</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:12 • WhatsApp</p>
-                  </div>
-                </div>
-                {/* 8 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-amber-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <Wrench className="w-3.5 h-3.5 text-amber-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Milan Novák accepted the 307 shower leak</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:11 • MT-115</p>
-                  </div>
-                </div>
-                {/* 9 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-blue-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Confirmed towel delivery to 212 in German</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">09:03 • WhatsApp</p>
-                  </div>
-                </div>
-                {/* 10 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-blue-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Answered a parking question for tomorrow's arrival</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">08:44 • Email</p>
-                  </div>
-                </div>
-                {/* 11 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <svg className="w-3.5 h-3.5 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Sold two days of bicycle rental to 409</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">08:36 • €24.00</p>
-                  </div>
-                </div>
-                {/* 12 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <svg className="w-3.5 h-3.5 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Added breakfast for 212, two mornings</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">08:14 • €28.00</p>
-                  </div>
-                </div>
-                {/* 13 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-rose-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Billing dispute from Nadia Haddad escalated to the manager</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">08:05 • Email</p>
-                  </div>
-                </div>
-                {/* 14 */}
-                <div className="flex items-start gap-3 text-xs leading-relaxed py-0.5 animate-in fade-in duration-300">
-                  <div className="w-5 h-5 bg-emerald-50 rounded flex items-center justify-center mt-0.5 shrink-0">
-                    <svg className="w-3.5 h-3.5 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-800">Sold the romantic package to 310</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 font-mono">07:58 • €55.00</p>
-                  </div>
-                </div>
+                )) : (
+                  <div className="text-sm text-slate-400 p-4 text-center">No recent AI activity.</div>
+                )}
               </div>
             </div>
 
@@ -1089,7 +780,9 @@ const FrontOfficeDashboardView = () => {
                 <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider font-mono">Handover note</span>
               </div>
               <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                Night shift left nothing open. Clara Bertrand in 302 has now written three times about the air conditioning — the manager is deciding between an upgrade to 310 and a rate reduction. Do not promise either.
+                {openRequestsCount === 0 
+                  ? "Night shift left nothing open. No active escalations or pending requests." 
+                  : `Night shift left ${openRequestsCount} open request(s). Please check the priority tasks list.`}
               </p>
             </div>
           </div>

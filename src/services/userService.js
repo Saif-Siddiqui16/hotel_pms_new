@@ -1,33 +1,103 @@
-import { initialUsersData } from '../data/mockData';
+import { API_BASE_URL } from '../config';
 
-let usersState = [...initialUsersData];
+const getAuthHeaders = () => {
+  const token = sessionStorage.getItem('autopilot_token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};
 
 export const userService = {
   getUsers: async () => {
-    return [...usersState];
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        return data.data.map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phoneNumber: u.phoneNumber,
+          role: u.role,
+          status: u.status || 'Active',
+          hotelName: u.hotelName || 'Unknown Hotel',
+          joinedDate: u.createdAt ? u.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          avatarColor: 'bg-indigo-600'
+        }));
+      }
+      return [];
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      return [];
+    }
   },
 
   createUser: async (userData) => {
-    const newUser = {
-      id: `usr-${Date.now()}`,
-      name: userData.name,
-      email: userData.email,
-      role: userData.role || 'Front Office',
-      status: userData.status || 'Active',
-      joinedDate: new Date().toISOString().split('T')[0],
-      avatarColor: 'bg-indigo-600'
-    };
-    usersState = [newUser, ...usersState];
-    return newUser;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          phoneNumber: userData.phoneNumber,
+          role: userData.role || 'Front Office Manager',
+          status: userData.status || 'Active',
+          hotelId: userData.hotelId || 1
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const u = data.data;
+        return {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phoneNumber: u.phoneNumber,
+          role: u.role,
+          status: u.status || 'Active',
+          joinedDate: new Date().toISOString().split('T')[0],
+          avatarColor: 'bg-indigo-600'
+        };
+      }
+      throw new Error(data.message || 'Failed to create user');
+    } catch (err) {
+      console.error('Error creating user:', err);
+      throw err;
+    }
   },
 
   updateUser: async (id, updates) => {
-    usersState = usersState.map(u => u.id === id ? { ...u, ...updates } : u);
-    return usersState.find(u => u.id === id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        return data.data;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error updating user:', err);
+      return null;
+    }
   },
-
   deleteUser: async (id) => {
-    usersState = usersState.filter(u => u.id !== id);
-    return true;
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      return true;
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      return false;
+    }
   }
 };

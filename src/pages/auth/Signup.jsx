@@ -41,7 +41,7 @@ const Signup = () => {
       });
       const data = await res.json();
       if (data.success && data.user) {
-        localStorage.setItem('autopilot_token', data.token);
+        sessionStorage.setItem('autopilot_token', data.token);
         setIsLoading(false);
         setIsSuccess(true);
         return;

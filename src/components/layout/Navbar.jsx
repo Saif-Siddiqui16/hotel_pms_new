@@ -8,7 +8,7 @@ import { useApp, ROLES } from '../../context/AppContext';
 import { cn } from '../../utils/cn';
 
 export const Navbar = () => {
-  const { role, activeWorkspace, hotelSubscription, toggleSidebar, exitWorkspace, setIsAuthenticated } = useApp();
+  const { user, role, activeWorkspace, hotelSubscription, toggleSidebar, exitWorkspace, setIsAuthenticated, whatsappLogs = [] } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -75,10 +75,9 @@ export const Navbar = () => {
     }
   };
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+  const notifications = JSON.parse(sessionStorage.getItem('notifications') || '[]');
   const unreadCount = notifications.filter(n => !n.read).length;
-  const userName = (user?.name && user.name !== 'John Doe') ? user.name : (role === ROLES.SUPER_ADMIN ? 'System Admin' : 'John Manager');
+  const userName = user?.name ? user.name : (role === ROLES.SUPER_ADMIN ? 'System Admin' : 'John Manager');
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
   // Search dummy data
@@ -285,28 +284,25 @@ export const Navbar = () => {
                         </div>
                       ) : (
                         <div className="divide-y divide-slate-50">
-                          {[
-                            { icon: '📱', text: 'Maria Silva replied “Cleaning” for room 405', time: '15:02', source: 'WhatsApp' },
-                            { icon: '📱', text: 'Inès Duarte marked 307 as Inspected', time: '13:48', source: 'WhatsApp' },
-                            { icon: '📱', text: 'Kadir Yılmaz started 212 — Stayover linen', time: '14:15', source: 'WhatsApp' },
-                            { icon: '📱', text: 'Alina Popescu reported DND on 115', time: '11:30', source: 'WhatsApp' },
-                            { icon: '📱', text: 'Guest Clara Bertrand requested room change via WhatsApp', time: '09:52', source: 'Guest' },
-                            { icon: '📱', text: 'Sofia Marchetti asked about breakfast hours', time: '09:47', source: 'Guest' },
-                            { icon: '📱', text: 'Yuki Tanabe requested human takeover for restaurant reservation', time: '08:26', source: 'Human takeover' },
-                            { icon: '📱', text: 'Priya Raghavan asked about the spa schedule', time: '08:11', source: 'Guest' },
-                          ].map((item, i) => (
-                            <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors cursor-default">
-                              <span className="text-base shrink-0 mt-0.5">{item.icon}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs text-slate-800 font-medium leading-snug">{item.text}</p>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                  <span className="text-[10px] text-slate-400 font-mono">{item.time}</span>
-                                  <span className="text-slate-300 text-[10px]">·</span>
-                                  <span className="text-[10px] font-semibold text-slate-500">{item.source}</span>
+                          {whatsappLogs.length > 0 ? (
+                            whatsappLogs.map((item, i) => (
+                              <div key={item.id || i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors cursor-default">
+                                <span className="text-base shrink-0 mt-0.5">{item.icon || '📱'}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-slate-800 font-medium leading-snug">{item.text}</p>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="text-[10px] text-slate-400 font-mono">{item.time}</span>
+                                    <span className="text-slate-300 text-[10px]">·</span>
+                                    <span className="text-[10px] font-semibold text-slate-500">{item.source || 'WhatsApp'}</span>
+                                  </div>
                                 </div>
                               </div>
+                            ))
+                          ) : (
+                            <div className="p-8 text-center text-slate-400 text-xs italic">
+                              No WhatsApp operations logged yet.
                             </div>
-                          ))}
+                          )}
                         </div>
                       )}
                     </div>
@@ -327,7 +323,7 @@ export const Navbar = () => {
                 </div>
                 <div className="hidden sm:flex flex-col text-left">
                   <span className="text-xs font-bold text-white leading-tight">{userName}</span>
-                  <span className="text-[9px] text-purple-300 font-mono uppercase font-semibold">[{getRoleLabel(role)}]</span>
+                  <span className="text-[9px] text-purple-300 font-mono uppercase font-semibold">[{user?.originalRole || getRoleLabel(role)}]</span>
                 </div>
                 <ChevronDown size={14} className="text-slate-400" />
               </button>
