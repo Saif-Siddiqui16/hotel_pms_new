@@ -54,12 +54,10 @@ export const UsersManagement = () => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const payload = { name, role, status };
+    const payload = { name, role, status, phoneNumber };
     if (role.includes('Manager')) {
       payload.email = email;
       payload.password = password;
-    } else {
-      payload.phoneNumber = phoneNumber;
     }
     
     try {
@@ -97,17 +95,16 @@ export const UsersManagement = () => {
     const updates = {
       name: editName,
       role: editRole,
-      status: editStatus
+      status: editStatus,
+      phoneNumber: editPhoneNumber
     };
     
     if (editRole.includes('Manager')) {
       updates.email = editEmail;
-      updates.phoneNumber = null; // Clear if role changed
       if (editPassword.trim()) {
         updates.password = editPassword;
       }
     } else {
-      updates.phoneNumber = editPhoneNumber;
       updates.email = null; // Clear if role changed
     }
 
@@ -293,7 +290,7 @@ export const UsersManagement = () => {
                 />
               </div>
 
-              {role.includes('Manager') ? (
+              {role.includes('Manager') && (
                 <>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700 block">Work Email</label>
@@ -319,19 +316,19 @@ export const UsersManagement = () => {
                     />
                   </div>
                 </>
-              ) : (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 block">WhatsApp Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+1234567890"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
-                  />
-                </div>
               )}
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 block">WhatsApp Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+1234567890"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                />
+              </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 block">Operational Role</label>
@@ -410,7 +407,7 @@ export const UsersManagement = () => {
                 />
               </div>
 
-              {editRole.includes('Manager') ? (
+              {editRole.includes('Manager') && (
                 <>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700 block">Work Email</label>
@@ -434,19 +431,19 @@ export const UsersManagement = () => {
                     />
                   </div>
                 </>
-              ) : (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 block">WhatsApp Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    value={editPhoneNumber}
-                    onChange={(e) => setEditPhoneNumber(e.target.value)}
-                    placeholder="+1234567890"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
-                  />
-                </div>
               )}
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 block">WhatsApp Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={editPhoneNumber}
+                  onChange={(e) => setEditPhoneNumber(e.target.value)}
+                  placeholder="+1234567890"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#6D4AFF] focus:bg-white rounded-xl outline-none text-xs font-medium text-slate-900"
+                />
+              </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 block">Operational Role</label>
