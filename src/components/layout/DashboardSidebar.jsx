@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  MessageSquare, Sparkles, LayoutDashboard, UserCheck, TrendingUp, Users, Settings as SettingsIcon, Building2, Clock, Wrench, CreditCard
+  MessageSquare, Sparkles, LayoutDashboard, UserCheck, TrendingUp, Users, Settings as SettingsIcon, Building2, Clock, Wrench, CreditCard, Gauge, ClipboardList
 } from 'lucide-react';
 import { useApp, ROLES } from '../../context/AppContext';
 import { cn } from '../../utils/cn';
@@ -18,32 +18,30 @@ export const DashboardSidebar = () => {
   const isMaintenance = role === ROLES.MAINTENANCE_MANAGER || role === ROLES.MAINTENANCE_STAFF;
   const isManagerOrAdmin = !isSuperAdmin && !isFrontOffice && !isHousekeeping && !isMaintenance;
 
-  // Top Nav Items configuration per Department
   const managerNavItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
     { name: 'Conversations', icon: MessageSquare, path: '/app/conversations' },
     { name: 'Tasks', icon: UserCheck, path: '/app/takeover-queue' },
     { name: 'Upsells', icon: TrendingUp, path: '/app/transactions' },
-    { name: 'Users', icon: Users, path: '/app/users' },
     { name: 'Settings', icon: SettingsIcon, path: '/app/settings' },
   ];
 
   const frontOfficeNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/app', exact: true },
-    { name: 'Conversations', icon: MessageSquare, path: '/app/conversations' },
-    { name: 'Tasks', icon: UserCheck, path: '/app/takeover-queue' },
+    { name: 'Dashboard', icon: Gauge, path: '/app', exact: true },
+    { name: 'Conversations', icon: MessageSquare, path: '/app/conversations', badge: 2 },
+    { name: 'Tasks', icon: ClipboardList, path: '/app/takeover-queue', badge: 10 },
   ];
 
   const housekeepingNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/app/housekeeping', exact: true },
+    { name: 'Dashboard', icon: Gauge, path: '/app/housekeeping', exact: true },
     { name: 'Rooms', icon: Building2, path: '/app/housekeeping?tab=rooms' },
-    { name: 'Tasks', icon: Clock, path: '/app/housekeeping?tab=tasks' },
+    { name: 'Tasks', icon: ClipboardList, path: '/app/housekeeping?tab=tasks', badge: 10 },
   ];
 
   const maintenanceNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/app/maintenance', exact: true },
+    { name: 'Dashboard', icon: Gauge, path: '/app/maintenance', exact: true },
     { name: 'Issues', icon: Wrench, path: '/app/maintenance?tab=issues' },
-    { name: 'Tasks', icon: Clock, path: '/app/maintenance?tab=tasks' },
+    { name: 'Tasks', icon: ClipboardList, path: '/app/maintenance?tab=tasks', badge: 10 },
   ];
 
   const superAdminNavItems = [
@@ -94,11 +92,11 @@ export const DashboardSidebar = () => {
         <div className="space-y-6">
           {/* Logo Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#6D4AFF] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm cursor-pointer" onClick={() => navigate('/app')}>
+            <div className="w-10 h-10 bg-[#105F39] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm cursor-pointer" onClick={() => navigate('/app')}>
               <Building2 size={20} />
             </div>
             <div className="text-left cursor-pointer" onClick={() => navigate('/app')}>
-              <h1 className="font-extrabold text-sm tracking-tight text-[#6D4AFF]">Hotelogx</h1>
+              <h1 className="font-extrabold text-sm tracking-tight text-[#105F39]">Hotelogx</h1>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider -mt-0.5">CONNECT</p>
             </div>
           </div>
@@ -119,14 +117,21 @@ export const DashboardSidebar = () => {
                 to={item.path}
                 end={item.exact}
                 className={cn(
-                  "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs transition-all cursor-pointer",
+                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs transition-all cursor-pointer border-l-[3px] border-transparent",
                   isActive
-                    ? "bg-[#EBF6EE] text-[#0F5132] font-black"
-                    : "text-slate-600 hover:text-slate-900 font-bold"
+                    ? "bg-[#EAF3EE] text-[#105F39] font-black border-l-[3px] border-l-[#105F39]"
+                    : "text-slate-500 hover:text-slate-900 font-bold"
                 )}
               >
-                <Icon size={17} className={isActive ? "text-[#0F5132]" : "text-slate-400"} />
-                <span>{item.name}</span>
+                <div className="flex items-center gap-3.5">
+                  <Icon size={17} className={isActive ? "text-[#105F39]" : "text-slate-400"} />
+                  <span>{item.name}</span>
+                </div>
+                {item.badge && (
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold">
+                    {item.badge}
+                  </span>
+                )}
               </NavLink>
             );
           })}

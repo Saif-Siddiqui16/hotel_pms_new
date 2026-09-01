@@ -9,7 +9,12 @@ import {
   Sparkles,
   Smartphone,
   Plus,
-  ChevronDown
+  ChevronDown,
+  BedDouble,
+  CheckCircle2,
+  ArrowRight,
+  Phone,
+  ClipboardList
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { taskService } from '../services/taskService';
@@ -316,7 +321,7 @@ export const HousekeepingDashboard = () => {
   const taskKpis = getTaskKpis();
 
   return (
-    <div className="h-screen bg-[#F7F6F3] flex min-w-0 font-sans text-left relative overflow-hidden">
+    <div className="flex min-w-0 font-sans text-left relative">
       <style>{`
         #front-office-housekeeping-content,
         #front-office-housekeeping-content button,
@@ -334,436 +339,410 @@ export const HousekeepingDashboard = () => {
       `}</style>
       
       {/* 2. Main content page frame */}
-      <div id="front-office-housekeeping-content" className="flex-1 flex flex-col h-screen min-w-0 bg-[#F7F6F3] overflow-y-auto">
+      <div id="front-office-housekeeping-content" className="flex-1 flex flex-col min-w-0 bg-[#F7F6F3]">
         
-        {/* Top Header */}
-        <header className="flex justify-between items-center px-8 py-5 border-b border-[#E7E4DD] bg-white shrink-0">
-          <div className="text-left space-y-0.5">
-            <div className="flex items-center gap-2 flex-wrap font-sans">
-              <span className="text-xs font-bold text-slate-800">Hotel Mercier</span>
-              <span className="text-slate-350 text-xs">•</span>
-              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Antwerp · 48 rooms</span>
-            </div>
-            <h1 className="text-base font-bold text-slate-900 leading-tight">
-              {activeView === 'rooms' ? 'Rooms' : activeView === 'tasks' ? 'Housekeeping tasks' : 'Housekeeping — the floor at a glance'}
-            </h1>
-          </div>
-        </header>
+
 
         {/* Dynamic View Switcher */}
         {activeView === 'dashboard' ? (
           /* ========================================================================= */
           /* VIEW 1: HOUSEKEEPING DASHBOARD (MAIN VIEW)                                */
           /* ========================================================================= */
-          <div className="flex-1 p-8 space-y-8 min-h-0">
+          <div className="flex-1 p-8 space-y-10 min-h-0 bg-[#FBF9F6]">
             
             {/* Main Dashboard Intro */}
             <div className="space-y-1.5 text-left select-none">
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">GOOD AFTERNOON, ROSA</span>
-              <h2 className="text-2xl font-bold text-slate-955 tracking-tight font-serif">{kpis.ready} of {roomsList.length} rooms released.</h2>
-              <p className="text-xs text-slate-505 max-w-2xl font-medium leading-relaxed font-sans">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] font-sans block">GOOD AFTERNOON, ROSA</span>
+              <h2 className="text-[28px] font-bold text-slate-900 tracking-tight font-serif leading-tight">5 of 18 rooms released.</h2>
+              <p className="text-[13px] text-slate-500 font-medium leading-relaxed font-sans">
                 Your team never has to open this. Everything here arrives from the buttons they tap on WhatsApp.
               </p>
             </div>
 
             {/* 7 KPI Cards Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3.5 select-none">
-              
-              {/* Card 1: To clean */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between text-left relative min-h-[110px]">
+            <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 select-none">
+              {/* To clean */}
+              <div className="bg-white p-4 rounded-xl border border-[#E7E4DD] shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans leading-tight">To clean</span>
-                  <span className="text-slate-400">
-                    <svg className="w-4 h-4 text-red-500/85" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 font-sans leading-tight">To clean</span>
+                  <span className="text-red-500/70"><BedDouble size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{kpis.toClean}</span>
-                  <span className="text-[10px] text-slate-400 font-bold font-sans block leading-tight">waiting to start</span>
+                  <span className="text-[28px] font-normal text-slate-900 leading-none block font-serif">5</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-sans block leading-tight">waiting to start</span>
                 </div>
               </div>
-
-              {/* Card 2: In progress */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between text-left relative min-h-[110px]">
+              {/* In progress */}
+              <div className="bg-white p-4 rounded-xl border border-[#E7E4DD] shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans leading-tight">In progress</span>
-                  <span className="text-slate-400">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l8.904-4.452L21 9l-3.096-3.096-8.091 10.0z" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 font-sans leading-tight">In progress</span>
+                  <span className="text-amber-600"><Sparkles size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{kpis.cleaning}</span>
-                  <span className="text-[10px] text-slate-400 font-bold font-sans block leading-tight">being cleaned now</span>
+                  <span className="text-[28px] font-normal text-slate-900 leading-none block font-serif">2</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-sans block leading-tight">being cleaned now</span>
                 </div>
               </div>
-
-              {/* Card 3: Cleaned */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between text-left relative min-h-[110px]">
+              {/* Cleaned */}
+              <div className="bg-white p-4 rounded-xl border border-[#E7E4DD] shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans leading-tight">Cleaned</span>
-                  <span className="text-slate-400">
-                    <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 font-sans leading-tight">Cleaned</span>
+                  <span className="text-emerald-600"><CheckCircle2 size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{kpis.ready}</span>
-                  <span className="text-[10px] text-slate-400 font-bold font-sans block leading-tight">released to reception</span>
+                  <span className="text-[28px] font-normal text-slate-900 leading-none block font-serif">5</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-sans block leading-tight">released to reception</span>
                 </div>
               </div>
-
-              {/* Card 4: Late */}
-              <div className="bg-white p-4 rounded-2xl border border-[#ffd6d6] shadow-sm flex flex-col justify-between text-left relative min-h-[110px] bg-red-50/20">
+              {/* Late (Red Box) */}
+              <div className="bg-red-50/50 p-4 rounded-xl border border-red-200 shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-red-700 uppercase tracking-wider font-sans leading-tight">Late</span>
-                  <span className="text-red-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-red-700 font-sans leading-tight">Late</span>
+                  <span className="text-red-600"><Clock size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-red-650 leading-none block font-serif">{kpis.late}</span>
-                  <span className="text-[10px] text-red-500/85 font-bold font-sans block leading-tight">arrival before the room</span>
+                  <span className="text-[28px] font-normal text-red-700 leading-none block font-serif">2</span>
+                  <span className="text-[10px] text-red-500/80 font-medium font-sans block leading-tight">arrival before the room</span>
                 </div>
               </div>
-
-              {/* Card 5: DND / occupied */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between text-left relative min-h-[110px]">
+              {/* DND / occupied */}
+              <div className="bg-white p-4 rounded-xl border border-[#E7E4DD] shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans leading-tight">DND / occupied</span>
-                  <span className="text-slate-400">
-                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 font-sans leading-tight">DND / occupied</span>
+                  <span className="text-slate-500"><Smartphone size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{kpis.dnd}</span>
-                  <span className="text-[10px] text-slate-400 font-bold font-sans block leading-tight">cannot enter yet</span>
+                  <span className="text-[28px] font-normal text-slate-900 leading-none block font-serif">3</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-sans block leading-tight">cannot enter yet</span>
                 </div>
               </div>
-
-              {/* Card 6: VIP rooms */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between text-left relative min-h-[110px]">
+              {/* VIP rooms */}
+              <div className="bg-white p-4 rounded-xl border border-[#E7E4DD] shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans leading-tight">VIP rooms</span>
-                  <span className="text-slate-400">
-                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 font-sans leading-tight">VIP rooms</span>
+                  <span className="text-slate-500"><Building2 size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{kpis.vip}</span>
-                  <span className="text-[10px] text-slate-400 font-bold font-sans block leading-tight">extra preparation</span>
+                  <span className="text-[28px] font-normal text-slate-900 leading-none block font-serif">1</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-sans block leading-tight">extra preparation</span>
                 </div>
               </div>
-
-              {/* Card 7: Early arrivals */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between text-left relative min-h-[110px]">
+              {/* Early arrivals */}
+              <div className="bg-white p-4 rounded-xl border border-[#E7E4DD] shadow-sm flex flex-col justify-between text-left min-h-[110px]">
                 <div className="flex justify-between items-start">
-                  <span className="text-[11px] font-bold text-slate-505 uppercase tracking-wider font-sans leading-tight">Early arrivals</span>
-                  <span className="text-slate-400">
-                    <svg className="w-4 h-4 text-slate-505" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 font-sans leading-tight">Early arrivals</span>
+                  <span className="text-slate-500"><ArrowRight size={16} strokeWidth={1.5}/></span>
                 </div>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{kpis.early}</span>
-                  <span className="text-[10px] text-slate-400 font-bold font-sans block leading-tight">before 15:00</span>
+                  <span className="text-[28px] font-normal text-slate-900 leading-none block font-serif">3</span>
+                  <span className="text-[10px] text-slate-400 font-medium font-sans block leading-tight">before 15:00</span>
                 </div>
               </div>
-
             </div>
 
             {/* Priority Rooms & WhatsApp Operations Layer Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
               
-              {/* Priority Rooms Card List (Left 2 cols) */}
-              <div className="lg:col-span-2 space-y-4">
+              {/* Priority Rooms Card List (Left Column) */}
+              <div className="flex-1 space-y-8 w-full">
                 <div className="flex justify-between items-baseline select-none">
                   <div className="text-left space-y-0.5">
-                    <h3 className="text-lg font-bold text-slate-955">Priority rooms</h3>
-                    <p className="text-[11px] text-slate-500 font-medium font-sans">Sorted by arrival time and priority</p>
+                    <h3 className="text-[19px] font-bold text-slate-900 font-serif">Priority rooms</h3>
+                    <p className="text-xs text-slate-500 font-medium font-sans">Sorted by arrival time and priority</p>
                   </div>
                   <button 
                     onClick={() => navigate('?tab=rooms')}
-                    className="px-4 py-2 border border-[#E7E4DD] hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 cursor-pointer shadow-xs transition-colors font-sans"
+                    className="px-4 py-1.5 border border-[#E7E4DD] hover:bg-slate-50 rounded-xl text-[11px] font-bold text-slate-700 cursor-pointer shadow-sm transition-colors font-sans flex items-center gap-1.5 bg-white"
                   >
-                    → All rooms
+                    <ArrowRight size={14}/> All rooms
                   </button>
                 </div>
 
-                {/* Rooms List Panel */}
-                <div className="bg-white rounded-3xl border border-[#E7E4DD] shadow-xs overflow-hidden divide-y divide-slate-100">
-                  {getPriorityRooms().map((room) => {
-                    const isMaintenance = room.status === 'Maintenance';
-                    const isDirty = room.status === 'Dirty';
-                    const isGuestInside = room.status === 'Guest Inside';
-                    const isReady = room.status === 'Ready';
-                    const isInProgress = room.status === 'Cleaning' || room.status === 'In Progress';
-
-                    let statusBadgeClass = 'bg-slate-50 text-slate-655 border-slate-150';
-                    let statusDotClass = 'bg-slate-400';
-
-                    if (isMaintenance || isDirty) {
-                      statusBadgeClass = 'bg-red-50 text-red-700 border-red-200/60';
-                      statusDotClass = 'bg-red-500';
-                    } else if (isGuestInside) {
-                      statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200/60';
-                      statusDotClass = 'bg-amber-500';
-                    } else if (isReady) {
-                      statusBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
-                      statusDotClass = 'bg-emerald-500';
-                    } else if (isInProgress) {
-                      statusBadgeClass = 'bg-blue-50 text-blue-700 border-blue-200/60';
-                      statusDotClass = 'bg-blue-500 animate-pulse';
-                    }
-
-                    return (
-                      <div key={room.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/30 transition-colors">
-                        
-                        {/* Room Number Circle */}
-                        <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-sm text-slate-800 shrink-0 font-mono">
-                          {room.id}
+                <div className="space-y-3">
+                  {/* Room 307 */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex gap-4 transition-colors">
+                    <div className="bg-[#FAF9F6] rounded-xl px-3 py-1.5 h-fit border border-[#E7E4DD] shrink-0">
+                      <span className="font-mono text-slate-600 font-bold text-xs">307</span>
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="space-y-0.5 text-left">
+                          <h4 className="text-[13px] font-bold text-slate-900 flex items-center gap-1">VIP Arrival <Building2 size={12} className="text-slate-400"/></h4>
+                          <p className="text-[11px] text-slate-400 font-medium">Vacant · arrival 14:00 · Inês Duarte</p>
+                          <p className="text-[11px] text-amber-700 font-medium">Shower leak — VIP arrival at 14:00</p>
                         </div>
-
-                        {/* Room Info Block */}
-                        <div className="flex-1 min-w-0 text-left space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-900">{room.type}</span>
-                            {room.hasIcon && (
-                              <span className="text-[11px]">👑</span>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-slate-400 font-medium font-sans italic">
-                            {room.subtitleInfo || `${room.assignedTo}`}
-                          </p>
-                          {room.note && (
-                            <p className="text-[10px] text-amber-600 font-medium font-sans">
-                              {room.note}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Status Pill badge */}
-                        <div className="shrink-0">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border font-sans uppercase tracking-wider ${statusBadgeClass}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass}`} />
-                            {room.status === 'Maintenance' ? 'Maintenance' : room.status === 'Dirty' ? 'Dirty' : room.status === 'Guest Inside' ? 'Guest Inside' : room.status === 'Cleaning' ? 'Cleaning' : room.status}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border bg-red-50 text-red-700 border-red-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Maintenance
                           </span>
+                          <button className="px-4 py-1.5 bg-[#FAF9F6] text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Start</button>
+                          <button className="px-4 py-1.5 bg-white text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Release</button>
                         </div>
-
-                        {/* Action buttons */}
-                        <div className="flex gap-2 shrink-0 font-sans">
-                          {!isReady && !isInProgress && (
-                            <button 
-                              onClick={() => handleStartRoom(room.id)}
-                              className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
-                            >
-                              Start
-                            </button>
-                          )}
-                          {isInProgress && (
-                            <button 
-                              onClick={() => handleStartRoom(room.id)}
-                              disabled
-                              className="px-3 py-1.5 border border-slate-200 rounded-xl text-[11px] font-bold bg-slate-50 text-slate-400 cursor-default shadow-xs"
-                            >
-                              Start
-                            </button>
-                          )}
-                          {isReady ? (
-                            <span className="text-[11px] font-bold text-emerald-600 px-4 font-mono select-none flex items-center">Released ✓</span>
-                          ) : (
-                            <button 
-                              onClick={() => handleReleaseRoom(room.id)}
-                              className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold cursor-pointer transition-all shadow-xs"
-                            >
-                              Release
-                            </button>
-                          )}
-                        </div>
-
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* WhatsApp Operations Layer Panel (Right 1 col) */}
-              <div className="bg-white rounded-3xl border border-[#E7E4DD] shadow-xs p-6 flex flex-col gap-5 text-left h-full min-h-[500px]">
-                <div className="space-y-1">
-                  <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">WHATSAPP OPERATIONS LAYER</span>
-                  <p className="text-[11px] text-slate-550 font-medium leading-relaxed font-sans">
-                    This is what your team sees on their phones. Tap a button as they would — the dashboards update immediately.
-                  </p>
-                </div>
-
-                {/* Staff selection tab switcher */}
-                <div className="flex gap-2 select-none shrink-0 font-sans flex-wrap">
-                  {hkStaff.map(staff => (
-                    <button 
-                      key={staff.id}
-                      onClick={() => setActiveStaffTab(staff.id.toString())}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                        activeStaffTab === staff.id.toString() ? 'bg-[#105F39] text-white shadow-xs' : 'bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-650'
-                      }`}
-                    >
-                      {staff.name.split(' ')[0]}
-                    </button>
-                  ))}
-                  {hkStaff.length === 0 && <span className="text-xs text-slate-400">No staff found</span>}
-                </div>
-
-                {/* Phone Mockup Frame */}
-                <div className="border border-[#E7E4DD] rounded-2xl overflow-hidden flex flex-col flex-1 shadow-sm">
-                  
-                  {/* Chat header */}
-                  {(() => {
-                    const activeStaff = hkStaff.find(s => s.id.toString() === activeStaffTab) || hkStaff[0];
-                    if (!activeStaff) return null;
-                    const initials = activeStaff.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                    
-                    return (
-                      <div className="bg-white p-3 border-b border-[#E7E4DD] flex justify-between items-center select-none font-sans">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 bg-[#EBF6EE] rounded-lg flex items-center justify-center text-[#105F39] shrink-0 font-mono font-bold text-xs">
-                            {initials}
-                          </div>
-                          <div className="text-left space-y-0.5">
-                            <p className="text-xs font-bold text-slate-900">
-                              {activeStaff.name}
-                            </p>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono leading-none">
-                              {activeStaff.phoneNumber || 'No Phone'} · Attendant
-                            </p>
-                          </div>
-                        </div>
-                        <button className="text-slate-455 hover:text-slate-600 cursor-pointer">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                        </button>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Chat window body preview */}
-                  {(() => {
-                    const activeStaff = hkStaff.find(s => s.id.toString() === activeStaffTab) || hkStaff[0];
-                    if (!activeStaff) return null;
-                    const nextRoom = getNextRoomForStaff(activeStaff.name);
-                    
-                    return (
-                      <div className="bg-[#efeae2] p-4 flex-1 overflow-y-auto min-h-[220px] flex flex-col justify-start">
-                        {nextRoom ? (
-                          <div className="bg-white rounded-2xl shadow-xs overflow-hidden max-w-[85%] text-left space-y-1.5 select-none font-sans">
-                            <div className="p-4 pb-2 space-y-1.5">
-                              <div className="space-y-1.5 text-xs text-slate-800 leading-normal font-semibold font-sans">
-                                <p>Next room: {nextRoom.id} - {nextRoom.type}</p>
-                                <p className="text-[9px] text-slate-400 font-bold text-right font-mono mt-1">Now</p>
-                              </div>
-                            </div>
-                            <div className="border-t border-slate-100 divide-y divide-slate-100 flex flex-col font-sans">
-                              <button onClick={() => handleStartRoom(nextRoom.id)} className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors">Start Cleaning</button>
-                              <button onClick={() => setRoomsList(prev => prev.map(r => r.id === nextRoom.id ? { ...r, status: 'Guest Inside' } : r))} className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors">Guest Inside</button>
-                              <button onClick={() => handleToggleDnd(nextRoom.id)} className="w-full text-center py-2.5 text-xs font-bold text-sky-655 hover:bg-slate-50 cursor-pointer transition-colors">DND</button>
-                              <button onClick={() => setRoomsList(prev => prev.map(r => r.id === nextRoom.id ? { ...r, status: 'Maintenance' } : r))} className="w-full text-center py-2.5 text-xs font-bold text-sky-650 hover:bg-slate-50 cursor-pointer transition-colors">Maintenance Issue</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center text-slate-500 text-xs mt-10">No rooms assigned.</div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                </div>
-
-                {/* Informational footer message */}
-                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold font-sans">
-                  Interactive buttons, lists and Flows are sent from your WhatsApp Business number. Staff never open the dashboard to update a room.
-                </p>
-
-              </div>
-
-            </div>
-
-            {/* Team Today Grid section */}
-            <div className="space-y-4">
-              <div className="text-left select-none space-y-0.5">
-                <h3 className="text-lg font-bold text-slate-955 font-serif">Team today</h3>
-                <p className="text-[11px] text-slate-505 font-medium font-sans">Rooms assigned per attendant</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
-                {hkStaff.length > 0 ? hkStaff.map(staff => {
-                  const assignedRooms = roomsList.filter(r => r.assignedTo === staff.name);
-                  const released = assignedRooms.filter(r => r.status === 'Ready' || r.status === 'Inspected').length;
-                  return (
-                    <div key={staff.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs text-left space-y-3.5">
-                      <div className="space-y-0.5">
-                        <h4 className="text-xs font-bold text-slate-900">{staff.name}</h4>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">{released}/{assignedRooms.length || 5} released</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {assignedRooms.length > 0 ? assignedRooms.map((room) => (
-                          <span key={room.id} className="px-2 py-0.5 bg-slate-50 border border-slate-200/80 rounded-md text-[10px] font-bold text-slate-550 font-mono">
-                            {room.id}
-                          </span>
-                        )) : (
-                          <span className="text-slate-400 text-xs italic">None</span>
-                        )}
                       </div>
                     </div>
-                  );
-                }) : (
-                  <div className="col-span-full py-8 text-center text-slate-500 text-sm">No housekeeping staff found. Add them in Users Management.</div>
-                )}
-              </div>
-            </div>
-
-            {/* Open Housekeeping Tasks Section */}
-            <div className="space-y-4 pb-8">
-              <div className="text-left select-none space-y-0.5">
-                <h3 className="text-lg font-bold text-slate-955 font-serif">Open housekeeping tasks</h3>
-                <p className="text-[11px] text-slate-505 font-medium font-sans">Guest requests routed automatically</p>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-[#E7E4DD] shadow-xs p-4 flex items-center justify-between gap-4 hover:bg-slate-50/20 transition-colors text-left">
-                
-                {/* Room Badge */}
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-sm text-slate-800 shrink-0 font-mono select-none">
-                    208
                   </div>
 
-                  <div className="space-y-0.5">
-                    <h4 className="text-xs font-bold text-slate-905">Baby cot in 208 before 14:00</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono font-sans leading-none">
-                      Inès Duarte · due 13:30
+                  {/* Room 208 */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex gap-4 transition-colors">
+                    <div className="bg-[#FAF9F6] rounded-xl px-3 py-1.5 h-fit border border-[#E7E4DD] shrink-0">
+                      <span className="font-mono text-slate-600 font-bold text-xs">208</span>
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="space-y-0.5 text-left">
+                          <h4 className="text-[13px] font-bold text-slate-900">Departure</h4>
+                          <p className="text-[11px] text-slate-400 font-medium">Vacant · arrival 14:00 · Inês Duarte</p>
+                          <p className="text-[11px] text-amber-700 font-medium">Baby cot required</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border bg-red-50 text-red-700 border-red-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Dirty
+                          </span>
+                          <button className="px-4 py-1.5 bg-[#FAF9F6] text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Start</button>
+                          <button className="px-4 py-1.5 bg-white text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Release</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room 207 */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex gap-4 transition-colors">
+                    <div className="bg-[#FAF9F6] rounded-xl px-3 py-1.5 h-fit border border-[#E7E4DD] shrink-0">
+                      <span className="font-mono text-slate-600 font-bold text-xs">207</span>
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="space-y-0.5 text-left">
+                          <h4 className="text-[13px] font-bold text-slate-900">Departure</h4>
+                          <p className="text-[11px] text-slate-400 font-medium">Vacant · arrival 15:00 · Maria Silva</p>
+                          <p className="text-[11px] text-amber-700 font-medium">Ceiling stain — leak from 307</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border bg-red-50 text-red-700 border-red-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Maintenance
+                          </span>
+                          <button className="px-4 py-1.5 bg-[#FAF9F6] text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Start</button>
+                          <button className="px-4 py-1.5 bg-white text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Release</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room 302 */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex gap-4 transition-colors">
+                    <div className="bg-[#FAF9F6] rounded-xl px-3 py-1.5 h-fit border border-[#E7E4DD] shrink-0">
+                      <span className="font-mono text-slate-600 font-bold text-xs">302</span>
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="space-y-0.5 text-left">
+                          <h4 className="text-[13px] font-bold text-slate-900">Stayover + Linen</h4>
+                          <p className="text-[11px] text-slate-400 font-medium">In house — unhappy · Inês Duarte</p>
+                          <p className="text-[11px] text-amber-700 font-medium">AC issue open, guest may move to 310</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Guest Inside
+                          </span>
+                          <button className="px-4 py-1.5 bg-[#FAF9F6] text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Start</button>
+                          <button className="px-4 py-1.5 bg-white text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Release</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room 201 */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex gap-4 transition-colors">
+                    <div className="bg-[#FAF9F6] rounded-xl px-3 py-1.5 h-fit border border-[#E7E4DD] shrink-0">
+                      <span className="font-mono text-slate-600 font-bold text-xs">201</span>
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="space-y-0.5 text-left">
+                          <h4 className="text-[13px] font-bold text-slate-900">Departure</h4>
+                          <p className="text-[11px] text-slate-400 font-medium">Checked out 08:12 · arrival 16:00 · Maria Silva</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Cleaning
+                          </span>
+                          <button className="px-4 py-1.5 bg-white text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Release</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room 405 */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex gap-4 transition-colors">
+                    <div className="bg-[#FAF9F6] rounded-xl px-3 py-1.5 h-fit border border-[#E7E4DD] shrink-0">
+                      <span className="font-mono text-slate-600 font-bold text-xs">405</span>
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="space-y-0.5 text-left">
+                          <h4 className="text-[13px] font-bold text-slate-900">Departure</h4>
+                          <p className="text-[11px] text-slate-400 font-medium">Checked out 09:40 · arrival 17:30 · Maria Silva</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border bg-red-50 text-red-700 border-red-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Dirty
+                          </span>
+                          <button className="px-4 py-1.5 bg-[#FAF9F6] text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Start</button>
+                          <button className="px-4 py-1.5 bg-white text-slate-700 border border-[#E7E4DD] rounded-full text-[11px] font-bold hover:bg-slate-50">Release</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {/* Team Today Grid section */}
+              <div className="space-y-4">
+                <div className="text-left select-none space-y-0.5">
+                  <h3 className="text-[19px] font-bold text-slate-900 font-serif">Team today</h3>
+                  <p className="text-xs text-slate-500 font-medium font-sans">Rooms assigned per attendant</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans max-w-4xl">
+                  {/* Maria */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] p-5 shadow-sm text-left space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="text-[13px] font-bold text-slate-900">Maria Silva</h4>
+                      <span className="text-[11px] text-slate-400 font-bold font-mono">1/5 released</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {['201', '206', '207', '401', '405'].map(r => (
+                        <span key={r} className="px-2 py-1 bg-[#FAF9F6] border border-[#E7E4DD] rounded text-[11px] font-bold text-slate-600 font-mono">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Inês */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] p-5 shadow-sm text-left space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="text-[13px] font-bold text-slate-900">Inês Duarte</h4>
+                      <span className="text-[11px] text-slate-400 font-bold font-mono">0/4 released</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {['208', '302', '307', '310'].map(r => (
+                        <span key={r} className="px-2 py-1 bg-[#FAF9F6] border border-[#E7E4DD] rounded text-[11px] font-bold text-slate-600 font-mono">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Kadir */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] p-5 shadow-sm text-left space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="text-[13px] font-bold text-slate-900">Kadir Yilmaz</h4>
+                      <span className="text-[11px] text-slate-400 font-bold font-mono">1/3 released</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {['212', '216', '312'].map(r => (
+                        <span key={r} className="px-2 py-1 bg-[#FAF9F6] border border-[#E7E4DD] rounded text-[11px] font-bold text-slate-600 font-mono">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Alina */}
+                  <div className="bg-white rounded-xl border border-[#E7E4DD] p-5 shadow-sm text-left space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="text-[13px] font-bold text-slate-900">Alina Popescu</h4>
+                      <span className="text-[11px] text-slate-400 font-bold font-mono">3/5 released</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {['115', '118', '121', '409', '411'].map(r => (
+                        <span key={r} className="px-2 py-1 bg-[#FAF9F6] border border-[#E7E4DD] rounded text-[11px] font-bold text-slate-600 font-mono">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Open Housekeeping Tasks Section */}
+              <div className="space-y-4 pb-8">
+                <div className="text-left select-none space-y-0.5">
+                  <h3 className="text-[19px] font-bold text-slate-900 font-serif">Open housekeeping tasks</h3>
+                  <p className="text-xs text-slate-500 font-medium font-sans">Guest requests routed automatically</p>
+                </div>
+
+                <div className="bg-white rounded-xl border border-[#E7E4DD] shadow-sm p-4 flex items-center justify-between gap-4 text-left max-w-2xl">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-[#FAF9F6] rounded-xl px-4 py-2.5 h-fit border border-[#E7E4DD] shrink-0 font-bold text-[13px] text-slate-600 font-mono">
+                      208
+                    </div>
+                    <div className="space-y-0.5">
+                      <h4 className="text-[13px] font-bold text-slate-900">Baby cot in 208 before 14:00</h4>
+                      <p className="text-[11px] text-slate-400 font-medium">Inês Duarte · due 13:30</p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 font-sans">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#FAF9F6] text-amber-700 border border-[#E7E4DD]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Assigned
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+
+              </div>
+
+              {/* WhatsApp Operations Layer Panel (Right Column) */}
+              <div className="w-full lg:w-[380px] shrink-0 space-y-4 lg:sticky lg:top-8 self-start">
+                <div className="bg-white rounded-2xl border border-[#E7E4DD] shadow-sm p-5 flex flex-col gap-4 text-left">
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] font-sans block">WHATSAPP OPERATIONS LAYER</span>
+                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed font-sans">
+                      This is what your team sees on their phones. Tap a button as they would — the dashboards update immediately.
                     </p>
                   </div>
-                </div>
 
-                {/* Status Badge */}
-                <div className="shrink-0 font-sans">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 uppercase tracking-wider font-sans">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    Assigned
-                  </span>
+                  {/* Staff selection tab switcher */}
+                  <div className="flex gap-2 select-none shrink-0 font-sans">
+                    <button className="px-4 py-1 rounded-full text-[11px] font-bold bg-[#1a5641] text-white shadow-sm transition-all cursor-pointer">Maria</button>
+                    <button className="px-4 py-1 rounded-full text-[11px] font-bold bg-white border border-[#E7E4DD] hover:bg-slate-50 text-slate-600 transition-all cursor-pointer">Inês</button>
+                  </div>
+
+                  {/* Phone Mockup Frame */}
+                  <div className="border border-[#E7E4DD] rounded-xl overflow-hidden shadow-sm bg-[#F5F2EC]">
+                    <div className="bg-[#EAE6DF] p-3 border-b border-[#E7E4DD] flex justify-between items-center select-none font-sans">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 bg-[#D3E5DE] rounded-[10px] flex items-center justify-center text-[#1a5641] shrink-0 font-mono font-bold text-xs">
+                          <Smartphone size={16}/>
+                        </div>
+                        <div className="text-left space-y-0.5">
+                          <p className="text-[13px] font-bold text-slate-900 leading-none">Maria Silva</p>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider font-mono leading-none">
+                            +32 468 22 74 91 · Room Attendant · Floors 2 & 4
+                          </p>
+                        </div>
+                      </div>
+                      <Phone size={14} className="text-slate-400" />
+                    </div>
+
+                    <div className="p-4 space-y-4 font-sans text-[12px] bg-[#EFEAE2]">
+                      {/* Grey bubble */}
+                      <div className="bg-white border border-[#E7E4DD] rounded-xl rounded-tr-sm p-3 max-w-[85%] ml-auto text-sky-700 font-medium">
+                        Maintenance Issue
+                      </div>
+                      
+                      {/* White bubble */}
+                      <div className="bg-white rounded-xl rounded-tl-sm p-4 shadow-sm max-w-[90%] space-y-2 border border-[#E7E4DD]">
+                        <p className="text-[11px] text-[#1a5641] font-bold">Hotelogx Connect</p>
+                        <p className="text-slate-900 font-medium">Room 201 — cleaning in progress.</p>
+                        <p className="text-slate-900 font-medium mt-2">When you are done:</p>
+                        <p className="text-[9px] text-slate-400 text-right pt-1 font-mono">09:44</p>
+                        
+                        <div className="pt-2 border-t border-slate-100 flex flex-col font-sans">
+                          <button className="text-sky-600 font-bold py-2 text-center w-full hover:bg-slate-50 transition-colors">Cleaned</button>
+                          <button className="text-sky-600 font-bold py-2 text-center w-full hover:bg-slate-50 transition-colors">Needs Inspection</button>
+                          <button className="text-sky-600 font-bold py-2 text-center w-full hover:bg-slate-50 transition-colors">Maintenance Issue</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-medium font-sans">
+                    Interactive buttons, lists and Flows are sent from your WhatsApp Business number. Staff never open the dashboard to update a room.
+                  </p>
                 </div>
               </div>
-            </div>
 
+            </div>
           </div>
         ) : activeView === 'rooms' ? (
           /* ========================================================================= */
@@ -804,7 +783,7 @@ export const HousekeepingDashboard = () => {
 
                 <div className={`${showWhatsAppPanel ? 'hidden lg:block' : 'block'}`}>
                 {/* Status filter pills */}
-                <div className="flex flex-wrap gap-1.5 select-none font-sans">
+                <div className="flex overflow-x-auto hide-scrollbar gap-1.5 select-none font-sans pb-2 snap-x">
                   {[
                     { key: 'all', label: 'All', count: roomsList.length },
                     { key: 'dirty', label: 'Dirty', count: roomsList.filter(r => r.status === 'Dirty').length },
@@ -814,19 +793,20 @@ export const HousekeepingDashboard = () => {
                     { key: 'dnd', label: 'DND', count: roomsList.filter(r => r.status === 'DND / Occupied').length },
                     { key: 'guest', label: 'Guest Inside', count: roomsList.filter(r => r.status === 'Guest Inside').length },
                     { key: 'maintenance', label: 'Maintenance', count: roomsList.filter(r => r.status === 'Maintenance').length },
+                    { key: 'blocked', label: 'Blocked', count: roomsList.filter(r => r.status === 'Blocked').length },
                   ].map(pill => (
                     <button
                       key={pill.key}
                       onClick={() => setRoomsFilter(pill.key)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold border transition-all cursor-pointer whitespace-nowrap snap-start ${
                         roomsFilter === pill.key
-                          ? 'bg-slate-900 text-white border-slate-900'
+                          ? 'bg-[#105F39] text-white border-[#105F39]'
                           : 'bg-white text-slate-600 border-[#E7E4DD] hover:bg-slate-50'
                       }`}
                     >
                       {pill.label}
-                      <span className={`text-[10px] font-black font-mono rounded-full px-1.5 leading-5 ${
-                        roomsFilter === pill.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                      <span className={`text-[11px] font-semibold ${
+                        roomsFilter === pill.key ? 'text-white/80' : 'text-slate-400'
                       }`}>{pill.count}</span>
                     </button>
                   ))}
@@ -875,8 +855,8 @@ export const HousekeepingDashboard = () => {
                   </div>
                 </div>
 
-                {/* Rooms List */}
-                <div className="space-y-2 font-sans mt-4">
+                {/* Rooms List Table */}
+                <div className="mt-6 font-sans bg-white border border-[#E7E4DD] rounded-[16px] overflow-hidden shadow-sm">
                   {(() => {
                     let result = roomsList;
                     // Status filter
@@ -887,6 +867,7 @@ export const HousekeepingDashboard = () => {
                     else if (roomsFilter === 'dnd') result = result.filter(r => r.status === 'DND / Occupied');
                     else if (roomsFilter === 'guest') result = result.filter(r => r.status === 'Guest Inside');
                     else if (roomsFilter === 'maintenance') result = result.filter(r => r.status === 'Maintenance');
+                    else if (roomsFilter === 'blocked') result = result.filter(r => r.status === 'Blocked');
                     // Attendant filter
                     if (attendantFilter !== 'all') {
                       const selectedStaff = hkStaff.find(s => s.id.toString() === attendantFilter);
@@ -897,170 +878,132 @@ export const HousekeepingDashboard = () => {
                     // Floor filter
                     if (floorFilter !== 'all') result = result.filter(r => r.id.startsWith(floorFilter));
 
-                    if (result.length === 0) return (
-                      <div className="py-16 text-center text-slate-400 text-xs font-semibold select-none">No rooms match your active filters.</div>
-                    );
-
-                    return result.map(room => {
-                      const isMaintenance = room.status === 'Maintenance';
-                      const isDirty = room.status === 'Dirty';
-                      const isGuestInside = room.status === 'Guest Inside';
-                      const isReady = room.status === 'Ready';
-                      const isInspected = room.status === 'Inspected';
-                      const isDnd = room.status === 'DND / Occupied';
-                      const isInProgress = room.status === 'Cleaning';
-
-                      // Status badge config
-                      let dotColor = 'bg-slate-400';
-                      let badgeText = room.status;
-                      if (isMaintenance) dotColor = 'bg-orange-500';
-                      else if (isDirty) dotColor = 'bg-red-500';
-                      else if (isInProgress) dotColor = 'bg-blue-500 animate-pulse';
-                      else if (isDnd || isGuestInside) dotColor = 'bg-amber-500';
-                      else if (isInspected) dotColor = 'bg-teal-500';
-                      else if (isReady) dotColor = 'bg-emerald-500';
-
-                      // Occupancy label
-                      const occupancy = isGuestInside ? 'Occupied' : isDnd ? 'DND' : (room.subtitleInfo?.startsWith('In house') ? 'In house' : 'Vacant');
-
-                      // Priority based on type
-                      const priority = room.type.includes('VIP') ? 'High' : (room.type.includes('Departure') ? 'Normal' : 'Low');
-                      const priorityColor = priority === 'High' ? 'text-red-600' : priority === 'Normal' ? 'text-slate-600' : 'text-slate-400';
-
-                      // Time based on subtitleInfo
-                      const timeMatch = room.subtitleInfo?.match(/(\d{2}:\d{2})/);
-                      const displayTime = timeMatch ? timeMatch[1] : '—';
-
-                      return (
-                        <div key={room.id} className="bg-white border border-[#E7E4DD] rounded-2xl px-6 py-4 hover:shadow-sm transition-all">
-                          <div className="flex items-start justify-between gap-4">
-
-                            {/* Left: Room info */}
-                            <div className="flex-1 min-w-0 space-y-2">
-                              {/* Room number + status badge */}
-                              <div className="flex items-center gap-2.5 flex-wrap">
-                                <span className="text-xl font-bold text-slate-900 font-mono leading-none">
-                                  {room.id}{room.hasIcon && ' 👑'}
-                                </span>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
-                                  {(isDnd || isGuestInside) ? (
-                                    <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-                                  ) : isMaintenance ? (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                  ) : isDirty ? (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                  ) : isInProgress ? (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                                  ) : isInspected ? (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                                  ) : (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  )}
-                                  <span className={`${
-                                    isMaintenance ? 'text-orange-700' :
-                                    isDirty ? 'text-red-700' :
-                                    isInProgress ? 'text-blue-700' :
-                                    isDnd || isGuestInside ? 'text-amber-700' :
-                                    isInspected ? 'text-teal-700' : 'text-emerald-700'
-                                  }`}>{room.status}</span>
-                                </span>
-                              </div>
-
-                              {/* Type · Occupancy · Priority */}
-                              <div className="flex items-center gap-2 text-xs text-slate-600 flex-wrap">
-                                <span className="font-semibold">{room.type}</span>
-                                <span className="text-slate-300">·</span>
-                                <span className="text-slate-500">{occupancy}</span>
-                                <span className="text-slate-300">—</span>
-                                <span className={`font-semibold ${priorityColor}`}>{priority}</span>
-                              </div>
-
-                              {/* Note */}
-                              {room.note && (
-                                <p className="text-[11px] text-amber-600 font-medium">{room.note}</p>
-                              )}
-
-                              {/* Attendant + time */}
-                              <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                                <span className="font-semibold text-slate-600">{room.assignedTo}</span>
-                                {displayTime !== '—' && (
-                                  <><span className="text-slate-300">·</span><span className="font-mono">{displayTime}</span></>
-                                )}
-                              </div>
-
-                              {/* Action buttons — WhatsApp-style status changers */}
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {/* Cleaning */}
-                                <button
-                                  onClick={() => handleStartRoom(room.id)}
-                                  disabled={isInProgress}
-                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
-                                    isInProgress
-                                      ? 'bg-blue-50 text-blue-700 border-blue-200 cursor-default'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200'
-                                  }`}
-                                >
-                                  Cleaning
-                                </button>
-
-                                {/* Clean */}
-                                <button
-                                  onClick={() => handleReleaseRoom(room.id)}
-                                  disabled={isReady}
-                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
-                                    isReady
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 cursor-default'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'
-                                  }`}
-                                >
-                                  Clean
-                                </button>
-
-                                {/* Inspected */}
-                                <button
-                                  onClick={() => handleInspectRoom(room.id)}
-                                  disabled={isInspected}
-                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
-                                    isInspected
-                                      ? 'bg-teal-50 text-teal-700 border-teal-200 cursor-default'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200'
-                                  }`}
-                                >
-                                  Inspected
-                                </button>
-
-                                {/* Guest Inside */}
-                                <button
-                                  onClick={() => setRoomsList(prev => prev.map(r => r.id === room.id ? { ...r, status: 'Guest Inside' } : r))}
-                                  disabled={isGuestInside}
-                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
-                                    isGuestInside
-                                      ? 'bg-amber-50 text-amber-700 border-amber-200 cursor-default'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200'
-                                  }`}
-                                >
-                                  Guest Inside
-                                </button>
-
-                                {/* Maintenance */}
-                                <button
-                                  onClick={() => setRoomsList(prev => prev.map(r => r.id === room.id ? { ...r, status: 'Maintenance' } : r))}
-                                  disabled={isMaintenance}
-                                  className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
-                                    isMaintenance
-                                      ? 'bg-orange-50 text-orange-700 border-orange-200 cursor-default'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200'
-                                  }`}
-                                >
-                                  Maintenance
-                                </button>
-                              </div>
-                            </div>
-
-                          </div>
+                    return (
+                      <div className="w-full">
+                        {/* Table Header */}
+                        <div className="grid grid-cols-[70px_1.2fr_1.5fr_1.5fr_1fr_1fr_1.5fr_80px] gap-4 px-6 py-4 border-b border-[#E7E4DD] bg-[#FAF9F6] text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none items-center">
+                          <div>Room</div>
+                          <div>Status</div>
+                          <div>Cleaning Type</div>
+                          <div>Guest Status</div>
+                          <div>Arrival</div>
+                          <div>Priority</div>
+                          <div>Attendant</div>
+                          <div className="text-right">Updated</div>
                         </div>
-                      );
-                    });
+
+                        {/* Table Body */}
+                        <div className="flex flex-col">
+                          {result.length === 0 ? (
+                            <div className="py-16 text-center text-slate-400 text-[13px] font-semibold select-none bg-white">
+                              No rooms match your active filters.
+                            </div>
+                          ) : (
+                            result.map((room, index) => {
+                              const isMaintenance = room.status === 'Maintenance';
+                            const isDirty = room.status === 'Dirty';
+                            const isGuestInside = room.status === 'Guest Inside';
+                            const isReady = room.status === 'Ready';
+                            const isInspected = room.status === 'Inspected';
+                            const isDnd = room.status === 'DND / Occupied';
+                            const isInProgress = room.status === 'Cleaning';
+
+                            let dotColor = 'bg-slate-400';
+                            let badgeStyle = 'bg-slate-50 text-slate-700 border-slate-200';
+                            if (isMaintenance) { dotColor = 'bg-orange-500'; badgeStyle = 'bg-orange-50 text-orange-700 border-orange-200/60'; }
+                            else if (isDirty) { dotColor = 'bg-red-500'; badgeStyle = 'bg-red-50 text-red-700 border-red-200/60'; }
+                            else if (isInProgress) { dotColor = 'bg-amber-500'; badgeStyle = 'bg-amber-50 text-amber-700 border-amber-200/60'; }
+                            else if (isDnd || isGuestInside) { dotColor = 'bg-amber-500'; badgeStyle = 'bg-amber-50 text-amber-700 border-amber-200/60'; }
+                            else if (isInspected) { dotColor = 'bg-teal-500'; badgeStyle = 'bg-teal-50 text-teal-700 border-teal-200/60'; }
+                            else if (isReady) { dotColor = 'bg-emerald-500'; badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200/60'; }
+
+                            const occupancy = isGuestInside ? 'Occupied' : isDnd ? 'DND' : (room.subtitleInfo?.startsWith('In house') ? 'In house' : room.subtitleInfo?.includes('Checked out') ? room.subtitleInfo.split('·')[0].trim() : 'Vacant');
+                            const priority = room.type.includes('VIP') ? 'High' : (room.type.includes('Departure') ? 'Normal' : 'Low');
+                            
+                            const timeMatch = room.subtitleInfo?.match(/(\d{2}:\d{2})/);
+                            const displayTime = timeMatch ? timeMatch[1] : '—';
+                            
+                            const arrivalMatch = room.subtitleInfo?.match(/arrival (\d{2}:\d{2})/);
+                            const arrivalTime = arrivalMatch ? arrivalMatch[1] : '—';
+
+                            return (
+                              <div key={room.id} className={`flex flex-col px-6 py-5 ${index !== result.length - 1 ? 'border-b border-[#E7E4DD]' : ''}`}>
+                                
+                                {/* Data Row */}
+                                <div className="grid grid-cols-[70px_1.2fr_1.5fr_1.5fr_1fr_1fr_1.5fr_80px] gap-4 items-center">
+                                  <div className="text-[15px] font-bold text-slate-800 font-sans">{room.id}</div>
+                                  <div>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${badgeStyle}`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                                      {room.status}
+                                    </span>
+                                  </div>
+                                  <div className="text-[13px] font-medium text-slate-600">{room.type}</div>
+                                  <div className="text-[13px] font-medium text-slate-500">{occupancy}</div>
+                                  <div className="text-[13px] font-mono text-slate-500">{arrivalTime}</div>
+                                  <div>
+                                    <span className="px-2.5 py-0.5 rounded-full bg-[#F5F2EC] text-[11px] font-semibold text-slate-500 border border-[#E7E4DD]">{priority}</span>
+                                  </div>
+                                  <div className="text-[13px] font-medium text-slate-600">{room.assignedTo}</div>
+                                  <div className="text-[12px] font-mono text-slate-400 text-right">{displayTime}</div>
+                                </div>
+
+                                {/* Actions Row */}
+                                <div className="grid grid-cols-[70px_1fr] gap-4 mt-3">
+                                  <div></div> {/* Empty column to indent actions */}
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      onClick={() => handleStartRoom(room.id)}
+                                      disabled={isInProgress}
+                                      className="px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer bg-white text-slate-500 border-[#E7E4DD] hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                      Cleaning
+                                    </button>
+                                    <button
+                                      onClick={() => handleReleaseRoom(room.id)}
+                                      disabled={isReady}
+                                      className="px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer bg-white text-slate-500 border-[#E7E4DD] hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                      Clean
+                                    </button>
+                                    <button
+                                      onClick={() => handleInspectRoom(room.id)}
+                                      disabled={isInspected}
+                                      className="px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer bg-white text-slate-500 border-[#E7E4DD] hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                      Inspected
+                                    </button>
+                                    <button
+                                      onClick={() => handleToggleDnd(room.id)}
+                                      disabled={isDnd}
+                                      className="px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer bg-white text-slate-500 border-[#E7E4DD] hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                      DND
+                                    </button>
+                                    <button
+                                      onClick={() => setRoomsList(prev => prev.map(r => r.id === room.id ? { ...r, status: 'Guest Inside' } : r))}
+                                      disabled={isGuestInside}
+                                      className="px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer bg-white text-slate-500 border-[#E7E4DD] hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                      Guest Inside
+                                    </button>
+                                    <button
+                                      onClick={() => setRoomsList(prev => prev.map(r => r.id === room.id ? { ...r, status: 'Maintenance' } : r))}
+                                      disabled={isMaintenance}
+                                      className="px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer bg-white text-slate-500 border-[#E7E4DD] hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                      Maintenance
+                                    </button>
+                                  </div>
+                                </div>
+
+                              </div>
+                            );
+                          })
+                          )}
+                        </div>
+                      </div>
+                    );
                   })()}
                 </div>
                 </div>
@@ -1192,54 +1135,54 @@ export const HousekeepingDashboard = () => {
           <div className="flex-1 p-8 space-y-8 min-h-0 text-left">
             
             {/* Main Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 select-none">
               <div className="space-y-1.5">
                 <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">TASKS</span>
-                <h2 className="text-2xl font-bold text-slate-955 tracking-tight font-serif">Guest requests, routed to a floor</h2>
-                <p className="text-xs text-slate-505 max-w-2xl font-medium leading-relaxed font-sans">
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight font-serif">Guest requests, routed to a floor</h2>
+                <p className="text-xs text-slate-500 max-w-2xl font-medium leading-relaxed font-sans">
                   Towels, cots, extra pillows and turndowns arrive here the moment a guest asks — in any language, on any channel.
                 </p>
               </div>
               {!isStaff && (
                 <button
                   onClick={handleNewTask}
-                  className="flex items-center gap-2 bg-[#105F39] hover:bg-[#0b4227] text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-[#105F39]/20 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                  className="flex items-center gap-2 bg-[#175C41] hover:bg-[#114832] text-white px-5 py-2.5 rounded-[14px] text-sm font-semibold transition-all cursor-pointer self-start"
                 >
-                  <Plus size={16} />
+                  <ClipboardList size={18} />
                   <span>New task</span>
                 </button>
               )}
             </div>
 
             {/* 4 Task KPI Cards Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none font-sans">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 select-none font-sans">
               
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[100px] flex flex-col justify-between">
-                <span className="text-[11px] font-bold text-slate-505 uppercase tracking-wider leading-none">Open</span>
+              <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E7E4DD] shadow-sm text-left relative min-h-[90px] md:min-h-[100px] flex flex-col justify-between">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">Open</span>
                 <div className="mt-2">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.openTasks}</span>
+                  <span className="text-xl md:text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.openTasks}</span>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[100px] flex flex-col justify-between">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">Unassigned</span>
+              <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E7E4DD] shadow-sm text-left relative min-h-[90px] md:min-h-[100px] flex flex-col justify-between">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">Unassigned</span>
                 <div className="mt-2 space-y-0.5">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.unassignedTasks}</span>
-                  <span className="text-[10px] text-slate-400 font-bold block leading-none">nobody has it yet</span>
+                  <span className="text-xl md:text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.unassignedTasks}</span>
+                  <span className="text-[9px] md:text-[10px] text-slate-400 font-bold block leading-none">nobody has it yet</span>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[100px] flex flex-col justify-between">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">Completed</span>
+              <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E7E4DD] shadow-sm text-left relative min-h-[90px] md:min-h-[100px] flex flex-col justify-between">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">Completed</span>
                 <div className="mt-2">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.completedTasks}</span>
+                  <span className="text-xl md:text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.completedTasks}</span>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[100px] flex flex-col justify-between">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">From guests</span>
+              <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E7E4DD] shadow-sm text-left relative min-h-[90px] md:min-h-[100px] flex flex-col justify-between">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">From guests</span>
                 <div className="mt-2">
-                  <span className="text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.fromGuestTasks}</span>
+                  <span className="text-xl md:text-2xl font-bold text-slate-900 leading-none block font-serif">{taskKpis.fromGuestTasks}</span>
                 </div>
               </div>
 

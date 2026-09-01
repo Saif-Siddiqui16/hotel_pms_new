@@ -496,7 +496,7 @@ const FrontOfficeConversationsView = () => {
       <div id="front-office-conversations-content" className="flex-1 flex flex-col h-full min-w-0 bg-[#F7F6F3]">
         
         {/* Top Header */}
-        <header className={`justify-between items-center px-6 lg:px-8 py-4 lg:py-5 border-b border-[#E7E4DD] bg-white shrink-0 ${mobileView === 'list' ? 'flex' : 'hidden lg:flex'}`}>
+        <header className="justify-between items-center px-6 lg:px-8 py-4 lg:py-5 border-b border-[#E7E4DD] bg-white shrink-0 flex">
           <div className="text-left space-y-0.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold text-slate-800 font-sans">Hotel Mercier</span>
@@ -509,10 +509,10 @@ const FrontOfficeConversationsView = () => {
         </header>
 
         {/* 3 columns body */}
-        <div className="flex-1 flex lg:grid lg:grid-cols-4 gap-0 min-h-0 bg-white relative">
+        <div className="flex-1 flex flex-col lg:grid lg:grid-cols-4 gap-0 min-h-0 bg-white relative overflow-y-auto lg:overflow-hidden">
           
           {/* Column 1: Conversations List (1/4 width) */}
-          <div className={`border-r border-[#E7E4DD] flex-col h-full min-h-0 w-full lg:w-auto ${mobileView === 'list' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="border-r border-[#E7E4DD] flex flex-col min-h-[400px] lg:h-full lg:min-h-0 w-full lg:w-auto shrink-0">
             {/* Search */}
             <div className="relative px-4 py-3 border-b border-[#E7E4DD]">
               <Search className="absolute left-7.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
@@ -597,7 +597,7 @@ const FrontOfficeConversationsView = () => {
           </div>
 
           {/* Column 2: Chat Pane (2/4 width) */}
-          <div className={`lg:col-span-2 flex-col h-full min-h-0 border-r border-[#E7E4DD] w-full lg:w-auto ${mobileView === 'chat' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="lg:col-span-2 flex flex-col min-h-[500px] lg:h-full lg:min-h-0 border-r border-[#E7E4DD] w-full lg:w-auto shrink-0">
             
             {/* Active chat header */}
             {selectedConv && (
@@ -605,7 +605,7 @@ const FrontOfficeConversationsView = () => {
               <div className="text-left space-y-0.5 flex items-center gap-3">
                 <button
                   onClick={() => setMobileView('list')}
-                  className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-slate-900 transition-colors shrink-0"
+                  className="hidden p-2 -ml-2 text-slate-400 hover:text-slate-900 transition-colors shrink-0"
                 >
                   <RefreshCw className="rotate-90" size={16} />
                 </button>
@@ -631,7 +631,7 @@ const FrontOfficeConversationsView = () => {
                 </div>
                 <button
                   onClick={() => setMobileView('info')}
-                  className="lg:hidden p-2 bg-slate-50 rounded-lg text-slate-900 border border-slate-200"
+                  className="hidden p-2 bg-slate-50 rounded-lg text-slate-900 border border-slate-200"
                 >
                   <Info size={14} />
                 </button>
@@ -777,21 +777,15 @@ const FrontOfficeConversationsView = () => {
             )}
           </div>
 
-          {/* Column 3: Guest Profile Details (1/4 width) */}
-          <div className={`p-6 space-y-6 overflow-y-auto bg-slate-50/20 text-left h-full min-h-0 flex-col w-full lg:w-auto ${mobileView === 'info' ? 'flex' : 'hidden lg:flex'}`}>
+          {/* Column 3: Guest Info Pane (1/4 width) */}
+          <div className="p-6 space-y-6 lg:overflow-y-auto bg-slate-50/20 text-left flex flex-col min-h-[400px] lg:h-full lg:min-h-0 w-full lg:w-auto shrink-0">
             
             {selectedConv && (
               <>
             {/* Header info */}
             <div className="space-y-3 shrink-0">
-              <div className="flex items-center justify-between lg:hidden mb-4 border-b border-[#E7E4DD] pb-4">
+              <div className="hidden lg:flex items-center justify-between mb-4 border-b border-[#E7E4DD] pb-4">
                 <h3 className="text-sm font-bold text-slate-900">Guest Information</h3>
-                <button
-                  onClick={() => setMobileView('chat')}
-                  className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-900"
-                >
-                  <X size={16} />
-                </button>
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">

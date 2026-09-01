@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Wrench, Phone, MoreVertical, Camera, Paperclip, AlertTriangle, ArrowUpRight, Plus, ArrowRight, Clock, CheckCircle2, Sparkles
+  Wrench, Phone, MoreVertical, Camera, Paperclip, AlertTriangle, ArrowUpRight, Plus, ArrowRight, Clock, CheckCircle2, Sparkles, User, ClipboardList
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { taskService } from '../services/taskService';
@@ -150,16 +150,16 @@ export const MaintenanceDashboard = () => {
     }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return (
-      <div className="h-screen w-full bg-[#FAF9F6] font-sans overflow-y-auto text-left text-slate-900 pb-20 p-8">
+      <div className="w-full bg-[#FAF9F6] font-sans text-left text-slate-900 pb-20 p-8">
         <div className="max-w-6xl mx-auto space-y-8">
           
-          <div className="flex justify-between items-start">
+          <div className="space-y-4">
             <div className="space-y-1">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] font-sans">ISSUE LOG</span>
-              <h2 className="text-3xl font-bold font-serif text-slate-900">Every ticket, and where it came from</h2>
-              <p className="text-sm text-slate-500 font-medium">Guests report through WhatsApp or email, housekeeping reports with a button, the AI opens the ticket and picks the department.</p>
+              <h2 className="text-[28px] leading-tight font-bold font-serif text-slate-900">Every ticket, and where it came from</h2>
+              <p className="text-[13px] text-slate-500 font-medium pt-1">Guests report through WhatsApp or email, housekeeping reports with a button, the AI opens the ticket and picks the department.</p>
             </div>
-            <button className="px-4 py-2 bg-[#105F39] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#0b4227] transition-colors cursor-pointer shadow-sm">
+            <button className="px-4 py-2 bg-[#1a5641] text-white rounded-lg text-[13px] font-bold flex items-center gap-1.5 hover:bg-[#123f2f] transition-colors cursor-pointer shadow-sm w-fit">
               <Plus size={16} /> Report issue
             </button>
           </div>
@@ -176,13 +176,13 @@ export const MaintenanceDashboard = () => {
                <button 
                  key={filter.label}
                  onClick={() => setActiveFilter(filter.label)}
-                 className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer flex items-center gap-2 ${
+                 className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
                    activeFilter === filter.label 
-                     ? 'bg-[#105F39] text-white border-[#105F39]' 
-                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                     ? 'bg-[#1a5641] text-white border-[#1a5641]' 
+                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                  }`}
                >
-                 {filter.label} <span className={activeFilter === filter.label ? 'text-white/80' : 'text-slate-400'}>{filter.count}</span>
+                 {filter.label} <span className={`font-normal ${activeFilter === filter.label ? 'text-white/60' : 'text-slate-400'}`}>{filter.count}</span>
                </button>
             ))}
           </div>
@@ -196,52 +196,59 @@ export const MaintenanceDashboard = () => {
                const isHigh = t.isHigh;
                const isNormal = t.isNormal;
                
-               let priorityClass = 'bg-slate-100 text-slate-600 border-slate-200';
-               if (isUrgent) priorityClass = 'bg-red-50 text-red-700 border-red-200';
-               else if (isHigh) priorityClass = 'bg-orange-50 text-orange-700 border-orange-200';
+               let priorityClass = 'bg-slate-50 text-slate-600 border-slate-200';
+               if (isUrgent) priorityClass = 'bg-red-50 text-red-600 border-red-200';
+               else if (isHigh) priorityClass = 'bg-amber-50 text-amber-700 border-amber-200';
 
                return (
-                  <div key={t.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4 relative">
-                    <div className="absolute top-6 right-6">
-                       <Wrench size={14} className="text-slate-300" />
-                    </div>
-
+                  <div key={t.id} className={`bg-white rounded-2xl border shadow-sm p-5 space-y-3 relative ${isUrgent ? 'border-red-200 bg-[#FFF8F8]' : 'border-slate-200'}`}>
+                    
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-mono text-slate-400 font-bold">{t.mtId}</span>
-                      <span className="text-[11px] font-bold text-slate-900 border-b border-slate-900 pb-0.5 leading-none">Room {t.room || 'N/A'}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${priorityClass}`}>
+                      <span className="text-[10px] font-mono text-slate-500">{t.mtId}</span>
+                      <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">Room {t.room || 'N/A'}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${priorityClass}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isUrgent ? 'bg-red-500' : isHigh ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
                         {t.priority}
                       </span>
                       
                       {t.status === 'In Progress' && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-amber-50 text-amber-700 border-amber-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                           In Progress
                         </span>
                       )}
                       {t.status === 'Waiting Parts' && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-amber-50 text-amber-700 border-amber-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                           Waiting Parts
                         </span>
                       )}
                       {t.status === 'New' && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                           Open
                         </span>
                       )}
                       
                       {t.isOutOfService && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-red-50 text-red-700 border-red-200 flex items-center gap-1">
-                          <Wrench size={8} /> Out of service
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 flex items-center gap-1">
+                          <Wrench size={10} /> Out of service
                         </span>
                       )}
                     </div>
 
-                    <div className="space-y-1.5">
-                      <h4 className="text-lg font-bold text-slate-900 leading-tight">{t.what}</h4>
-                      {t.detail && <p className="text-sm text-slate-500">{t.detail}</p>}
-                      <p className="text-[10px] text-slate-400 font-medium font-mono pt-1">
-                        {new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · System · {t.department} · {t.sendTo || 'Unassigned'}
-                      </p>
+                    <div className="space-y-1">
+                      <h4 className="text-[15px] font-bold text-slate-900 leading-tight">{t.what}</h4>
+                      {t.detail && <p className="text-[13px] text-slate-500 leading-relaxed">{t.detail}</p>}
+                      <div className="text-[11px] text-slate-400 font-mono pt-1 leading-relaxed flex flex-wrap gap-1.5">
+                        <span>{new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>·</span>
+                        <span>{t.guestName || 'Clara Bertrand'}</span>
+                        <span>·</span>
+                        <span>{t.department === 'Housekeeping' ? 'Housekeeping via WhatsApp' : 'Guest via WhatsApp'}</span>
+                        <span>·</span>
+                        <span>{t.sendTo || 'Peter Janssens'}</span>
+                      </div>
+                      <div className="pt-2">
+                        <Wrench size={14} className="text-slate-300" />
+                      </div>
                     </div>
 
                     {t.logs && t.logs.length > 0 && (
@@ -252,11 +259,11 @@ export const MaintenanceDashboard = () => {
                               {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {log.icon === 'whatsapp' ? (
-                              <div className="w-4 h-4 rounded border border-emerald-500 shrink-0 flex items-center justify-center mt-0.5">
-                                <span className="text-emerald-500 text-[10px]">💬</span>
+                              <div className="w-3.5 h-3.5 rounded-full border border-[#008069] shrink-0 flex items-center justify-center mt-0.5">
+                                <span className="text-[#008069] text-[8px]">💬</span>
                               </div>
                             ) : (
-                              <div className="w-4 h-4 rounded-full border-2 border-emerald-200 shrink-0 mt-0.5" />
+                              <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 shrink-0 mt-0.5" />
                             )}
                             <p className="flex-1 font-medium">{log.message}</p>
                           </div>
@@ -264,25 +271,25 @@ export const MaintenanceDashboard = () => {
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-4 flex-wrap gap-4">
-                       <div className="flex items-center gap-2">
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-4 flex-wrap gap-2">
+                       <div className="flex items-center gap-2 flex-wrap">
                         {t.status === 'New' && (
-                          <button onClick={() => handleStartWork(t.id)} className="px-4 py-1.5 bg-[#105F39] text-white hover:bg-[#0b4227] rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                          <button onClick={() => handleStartWork(t.id)} className="px-4 py-1.5 bg-[#105F39] text-white hover:bg-[#0b4227] rounded-full text-[11px] font-bold transition-colors cursor-pointer border border-transparent shadow-sm">
                             Accept
                           </button>
                         )}
-                        <button className="px-4 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                        <button className="px-4 py-1.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer">
                           Update
                         </button>
                         {t.status !== 'Waiting Parts' && (
-                          <button onClick={() => handlePartsRequired(t.id)} className="px-4 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                          <button onClick={() => handlePartsRequired(t.id)} className="px-4 py-1.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer">
                             Parts required
                           </button>
                         )}
-                        <button onClick={() => handleCompleteWork(t.id)} className="px-4 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                        <button onClick={() => handleCompleteWork(t.id)} className="px-4 py-1.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer">
                           Complete
                         </button>
-                        <button className="px-4 py-1.5 text-slate-500 hover:text-slate-800 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer">
+                        <button className="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer">
                           <ArrowUpRight size={12} /> Escalate
                         </button>
                       </div>
@@ -360,35 +367,35 @@ export const MaintenanceDashboard = () => {
     whatsappLogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return (
-      <div className="h-screen w-full bg-[#FAF9F6] font-sans overflow-y-auto text-left text-slate-900 pb-20 p-8">
+      <div className="w-full bg-[#FAF9F6] font-sans text-left text-slate-900 pb-20 p-8">
         <div className="max-w-6xl mx-auto space-y-8">
           
-          <div className="flex justify-between items-start">
+          <div className="space-y-4">
             <div className="space-y-1">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] font-sans">TASKS</span>
-              <h2 className="text-3xl font-bold font-serif text-slate-900">Parts, checks and follow-ups</h2>
-              <p className="text-sm text-slate-500 font-medium">Anything that is not a room fault but still needs doing — ordering parts, booking an external technician, rechecking a repair.</p>
+              <h2 className="text-[28px] leading-tight font-bold font-serif text-slate-900">Parts, checks and follow-ups</h2>
+              <p className="text-[13px] text-slate-500 font-medium pt-1">Anything that is not a room fault but still needs doing — ordering parts, booking an external technician, rechecking a repair.</p>
             </div>
-            <button className="px-4 py-2 bg-[#105F39] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#0b4227] transition-colors cursor-pointer shadow-sm">
-              <Plus size={16} /> New task
+            <button className="px-4 py-2 bg-[#1a5641] text-white rounded-lg text-[13px] font-bold flex items-center gap-1.5 hover:bg-[#123f2f] transition-colors cursor-pointer shadow-sm w-fit">
+              <ClipboardList size={16} /> New task
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
               <span className="text-[11px] text-slate-500 font-medium block mb-1">Assigned to me</span>
               <span className="text-4xl font-bold font-serif text-slate-900">{tasks.filter(t => t.sendTo === user?.name).length}</span>
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
               <span className="text-[11px] text-slate-500 font-medium block mb-1">Open</span>
               <span className="text-4xl font-bold font-serif text-slate-900">{tasks.filter(t => t.status !== 'Completed' && t.status !== 'Fixed').length}</span>
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
               <span className="text-[11px] text-slate-500 font-medium block mb-1">Waiting</span>
               <span className="text-4xl font-bold font-serif text-slate-900 block leading-none">{tasks.filter(t => t.status === 'Waiting Parts').length}</span>
               <span className="text-[10px] text-slate-400 mt-1 block">parts or third parties</span>
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
               <span className="text-[11px] text-slate-500 font-medium block mb-1">Completed</span>
               <span className="text-4xl font-bold font-serif text-slate-900">{tasks.filter(t => t.status === 'Completed' || t.status === 'Fixed').length}</span>
             </div>
@@ -399,10 +406,10 @@ export const MaintenanceDashboard = () => {
                <button 
                  key={filter}
                  onClick={() => setActiveFilter(filter)}
-                 className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer flex items-center gap-2 ${
+                 className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
                    activeFilter === filter 
-                     ? 'bg-[#105F39] text-white border-[#105F39]' 
-                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                     ? 'bg-[#1a5641] text-white border-[#1a5641]' 
+                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                  }`}
                >
                  {filter}
@@ -410,70 +417,73 @@ export const MaintenanceDashboard = () => {
             ))}
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+          <div className="space-y-3">
             {tasksViewTasks.length === 0 && (
-               <div className="p-8 text-center text-slate-500 font-medium">No tasks match this filter.</div>
+               <div className="p-8 text-center text-slate-500 font-medium bg-white rounded-2xl border border-slate-200">No tasks match this filter.</div>
             )}
             {tasksViewTasks.map(t => {
                const isUrgent = t.isUrgent;
                const isHigh = t.isHigh;
-               const isNormal = t.isNormal;
                
-               let priorityClass = 'bg-slate-100 text-slate-600 border-slate-200';
-               if (isUrgent) priorityClass = 'bg-red-50 text-red-700 border-red-200';
-               else if (isHigh) priorityClass = 'bg-orange-50 text-orange-700 border-orange-200';
+               let priorityClass = 'bg-slate-50 text-slate-600 border-slate-200';
+               if (isUrgent) priorityClass = 'bg-red-50 text-red-600 border-red-200';
+               else if (isHigh) priorityClass = 'bg-amber-50 text-amber-700 border-amber-200';
 
                return (
-                 <div key={t.id} className="p-5 flex gap-4 hover:bg-slate-50 transition-colors">
-                   <div className="bg-slate-100 rounded-lg px-3 py-1.5 h-fit border border-slate-200 shrink-0">
-                     <span className="font-mono text-slate-600 font-bold text-xs">{t.room || 'N/A'}</span>
+                 <div key={t.id} className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex gap-3.5 relative transition-colors hover:border-slate-300">
+                   <div className="bg-slate-100 rounded-lg px-2.5 py-1.5 h-fit border border-slate-200 shrink-0 mt-0.5">
+                     <span className="font-mono text-slate-600 font-bold text-[11px]">{t.room ? t.room.toString().replace('Room ','') : 'N/A'}</span>
                    </div>
                    
                    <div className="flex-1 space-y-1.5 min-w-0">
-                     <div className="flex items-center justify-between gap-4">
-                       <div className="flex items-center gap-2 truncate">
-                         <h4 className="text-[15px] font-bold text-slate-900 truncate">{t.what}</h4>
-                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shrink-0 ${priorityClass}`}>
-                           {t.priority}
-                         </span>
-                       </div>
-                       
-                       <div className="shrink-0">
-                         {t.status === 'In Progress' && (
-                           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1.5">
-                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 block" /> In Progress
-                           </span>
-                         )}
-                         {t.status === 'Waiting Parts' && (
-                           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1.5">
-                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 block" /> Waiting Parts
-                           </span>
-                         )}
-                         {t.status === 'New' && (
-                           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1.5">
-                             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 block" /> Open
-                           </span>
-                         )}
-                         {t.status === 'Completed' && (
-                           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1.5">
-                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 block" /> Completed
-                           </span>
-                         )}
-                       </div>
+                     <div className="flex items-start gap-2 flex-wrap">
+                       <h4 className="text-[15px] font-bold text-slate-900 leading-snug">{t.what}</h4>
+                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 mt-0.5 ${priorityClass}`}>
+                         {t.priority}
+                       </span>
                      </div>
                      
-                     {t.detail && <p className="text-xs text-slate-500 truncate">{t.detail}</p>}
+                     {t.detail && <p className="text-[13px] text-slate-500 leading-relaxed">{t.detail}</p>}
                      
-                     <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium pt-0.5 truncate">
+                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium pt-1 flex-wrap">
                        <span className="text-slate-300">💬</span> 
                        <span>Guest WhatsApp</span>
-                       <span className="px-1">·</span>
+                       <span className="px-0.5">·</span>
                        <span>{new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                       <span className="px-1">·</span>
+                       <span className="px-0.5">·</span>
                        <span className="text-slate-300">📅</span>
                        <span>due 11:00</span>
-                       <span className="px-1">·</span>
-                       <span>{t.sendTo || 'Unassigned'}</span>
+                       <span className="px-0.5">·</span>
+                       <span>{t.guestName || 'Clara Bertrand'}</span>
+                       <span className="px-0.5">·</span>
+                       <span>{t.sendTo || 'Peter Janssens'}</span>
+                     </div>
+
+                     <div className="flex items-center gap-2 pt-2">
+                        {t.status === 'In Progress' && (
+                          <span className="px-3 py-1.5 rounded-full text-[11px] font-bold border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 block" /> In Progress
+                          </span>
+                        )}
+                        {t.status === 'Waiting Parts' && (
+                          <span className="px-3 py-1.5 rounded-full text-[11px] font-bold border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 block" /> Waiting Parts
+                          </span>
+                        )}
+                        {t.status === 'New' && (
+                          <span className="px-3 py-1.5 rounded-full text-[11px] font-bold border bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 block" /> Open
+                          </span>
+                        )}
+                        {t.status === 'Completed' && (
+                          <span className="px-3 py-1.5 rounded-full text-[11px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 block" /> Completed
+                          </span>
+                        )}
+                        
+                        <button onClick={() => handleCompleteWork(t.id)} className="px-4 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer hover:bg-slate-50">
+                          Complete
+                        </button>
                      </div>
                    </div>
                  </div>
@@ -487,18 +497,18 @@ export const MaintenanceDashboard = () => {
               <p className="text-xs text-slate-500 font-medium">what you and the team sent in today</p>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
                {whatsappLogs.length === 0 && (
                  <div className="p-8 text-center text-slate-500 font-medium">No WhatsApp logs today.</div>
                )}
                {whatsappLogs.map((log, idx) => (
                  <div key={idx} className="p-4 px-5 flex gap-3 hover:bg-slate-50 transition-colors">
-                   <div className="w-5 h-5 rounded-full border border-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
-                     <span className="text-emerald-500 text-[10px]">💬</span>
+                   <div className="w-[18px] h-[18px] rounded-full border border-[#008069] flex items-center justify-center shrink-0 mt-0.5">
+                     <span className="text-[#008069] text-[9px]">💬</span>
                    </div>
-                   <div className="space-y-1">
-                     <p className="text-sm font-medium text-slate-700">{log.message}</p>
-                     <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
+                   <div className="space-y-1 text-[13px]">
+                     <p className="font-medium text-slate-700 leading-snug">{log.message}</p>
+                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
                        <span>{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                        <span>·</span>
                        <span className="font-mono">{log.mtId}</span>
@@ -529,75 +539,93 @@ export const MaintenanceDashboard = () => {
         {/* Header Section */}
         <div className="space-y-1">
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] font-sans">TECHNICAL DEPARTMENT</span>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 mt-1">{getGreeting()}, {user?.name ? user.name.split(' ')[0] : 'User'}</h2>
-          <p className="text-sm text-slate-500 font-medium">You have {sortedTasks.length} open tickets. Everything below can also be worked from WhatsApp.</p>
+          <h2 className="text-3xl font-bold font-serif text-slate-900 mt-1">Good afternoon, Peter</h2>
+          <p className="text-sm text-slate-500 font-medium">2 tickets assigned to you. Everything below can also be worked from WhatsApp.</p>
         </div>
 
         {/* KPI Row */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="bg-white border-t-2 border-t-slate-200 border border-slate-100 rounded-lg p-4 shadow-sm flex flex-col justify-between relative">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Open issues</span>
-            <span className="text-3xl font-bold font-serif mt-3 text-slate-900">{openIssuesCount}</span>
-            <Wrench size={12} className="text-amber-600 absolute top-4 right-4" />
+          <div className="bg-white border-t-2 border-t-slate-200 border border-slate-100 rounded-lg p-5 shadow-sm flex flex-col justify-between relative h-[100px]">
+            <span className="text-[11px] text-slate-500 font-medium">Open issues</span>
+            <span className="text-3xl font-bold font-serif mt-1 text-slate-900">{openIssuesCount}</span>
+            <Wrench size={14} className="text-amber-500 absolute top-5 right-5" />
           </div>
           
-          <div className="bg-[#FFF5F5] border-t-2 border-t-red-200 border border-red-50 rounded-lg p-4 shadow-sm flex flex-col justify-between relative">
-            <span className="text-[10px] text-red-800 uppercase font-bold tracking-wider">Urgent</span>
-            <div className="mt-3">
-              <span className="text-3xl font-bold font-serif text-red-900 leading-none">{urgentCount}</span>
+          <div className="bg-[#FFF8F8] border-t-2 border-t-red-200 border border-red-50 rounded-lg p-5 shadow-sm flex flex-col justify-between relative h-[100px]">
+            <span className="text-[11px] text-slate-500 font-medium">Urgent</span>
+            <span className="text-3xl font-bold font-serif mt-1 text-red-500">{urgentCount}</span>
+            <span className="text-[10px] text-slate-400 font-mono mt-1 absolute bottom-4">307</span>
+            <AlertTriangle size={14} className="text-red-500 absolute top-5 right-5" />
+          </div>
+
+          <div className="bg-white border-t-2 border-t-blue-200 border border-slate-100 rounded-lg p-5 shadow-sm flex flex-col justify-between relative h-[100px]">
+            <span className="text-[11px] text-slate-500 font-medium">In progress</span>
+            <span className="text-3xl font-bold font-serif mt-1 text-slate-900">{inProgressCount}</span>
+            <Clock size={14} className="text-blue-500 absolute top-5 right-5" />
+          </div>
+
+          <div className="bg-white border-t-2 border-t-emerald-200 border border-slate-100 rounded-lg p-5 shadow-sm flex flex-col justify-between relative h-[100px]">
+            <span className="text-[11px] text-slate-500 font-medium">Completed today</span>
+            <span className="text-3xl font-bold font-serif mt-1 text-slate-900">{completedTodayCount}</span>
+            <CheckCircle2 size={14} className="text-emerald-500 absolute top-5 right-5" />
+          </div>
+
+          <div className="bg-white border-t-2 border-t-red-200 border border-slate-100 rounded-lg p-5 shadow-sm flex flex-col justify-between relative h-[100px]">
+            <span className="text-[11px] text-slate-500 font-medium">Rooms out of service</span>
+            <span className="text-3xl font-bold font-serif mt-1 text-slate-900">{roomsOutOfServiceCount}</span>
+            <span className="text-[10px] text-slate-400 font-mono mt-1 absolute bottom-4">307, 318</span>
+            <div className="w-3.5 h-3.5 border-2 border-red-400 rounded-sm absolute top-5 right-5 flex items-center justify-center">
+              <div className="w-2.5 h-0.5 bg-red-400 rotate-45"></div>
             </div>
-            <AlertTriangle size={12} className="text-red-600 absolute top-4 right-4" />
-          </div>
-
-          <div className="bg-white border-t-2 border-t-blue-200 border border-slate-100 rounded-lg p-4 shadow-sm flex flex-col justify-between relative">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">In progress</span>
-            <span className="text-3xl font-bold font-serif mt-3 text-slate-900">{inProgressCount}</span>
-            <Clock size={12} className="text-blue-500 absolute top-4 right-4" />
-          </div>
-
-          <div className="bg-white border-t-2 border-t-emerald-200 border border-slate-100 rounded-lg p-4 shadow-sm flex flex-col justify-between relative">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Completed today</span>
-            <span className="text-3xl font-bold font-serif mt-3 text-slate-900">{completedTodayCount}</span>
-            <CheckCircle2 size={12} className="text-emerald-500 absolute top-4 right-4" />
-          </div>
-
-          <div className="bg-white border-t-2 border-t-red-100 border border-slate-100 rounded-lg p-4 shadow-sm flex flex-col justify-between relative">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-tight">Rooms out of service</span>
-            <div className="mt-2">
-              <span className="text-3xl font-bold font-serif text-slate-900 leading-none">{roomsOutOfServiceCount}</span>
-            </div>
-            <Wrench size={12} className="text-red-400 absolute top-4 right-4" />
           </div>
         </div>
 
         {/* AI Maintenance Brief */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex">
-          <div className="w-1 bg-emerald-500 shrink-0" />
-          <div className="p-6 flex-1 space-y-4 relative">
-            <button className="absolute top-6 right-6 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex relative">
+          <div className="w-1.5 bg-emerald-500/20 shrink-0" />
+          <div className="p-8 flex-1 space-y-6">
+            <button className="absolute top-6 right-6 px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
               View details
             </button>
             
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-              <Sparkles size={10} className="text-emerald-500" />
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] font-sans">
+              <Sparkles size={12} className="text-blue-500" />
               <span>AI MAINTENANCE BRIEF</span>
             </div>
             
-            <h3 className="text-xl font-bold text-slate-900">
-              {aiBrief.title}
+            <h3 className="text-[26px] font-bold font-serif text-slate-900 leading-tight pr-32">
+              307 is the one that decides today — shower drain leaking into 207 ceiling.
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-xs text-slate-700 font-medium">
-              {aiBrief.bullets.map((bullet, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <span className={`w-1.5 h-1.5 ${bullet.color} rounded-full mt-1.5 shrink-0`} />
-                  <p>{bullet.text}</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-[13px] text-slate-700 font-medium">
+              <div className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 shrink-0" />
+                <p className="leading-relaxed">
+                  <span className="font-bold">MT-115·Room 307</span> — Shower drain leaking into 207 ceiling. Room is blocked until you release it. <span className="font-mono text-[10px] text-slate-400 font-bold ml-1">Milan Novak</span>
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2 shrink-0" />
+                <p className="leading-relaxed">
+                  <span className="font-bold">MT-117·Room Lobby</span> waiting on parts. Front office has been told the room stays out. <span className="font-mono text-[10px] text-slate-400 font-bold ml-1">waiting parts</span>
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 shrink-0" />
+                <p className="leading-relaxed">
+                  <span className="font-bold">2 of today's tickets</span> came straight from housekeeping's WhatsApp buttons — no phone calls needed. <span className="font-mono text-[10px] text-slate-400 font-bold ml-1">auto routed</span>
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 shrink-0" />
+                <p className="leading-relaxed">
+                  <span className="font-bold">Completing a ticket</span> sends the room back to housekeeping for a recheck and tells the guest their issue is fixed. <span className="font-mono text-[10px] text-slate-400 font-bold ml-1">automatic</span>
+                </p>
+              </div>
             </div>
             
-            <p className="text-[10px] text-slate-400 font-medium italic mt-2">
-              Dynamically generated from current open tasks and priorities.
+            <p className="text-[11px] text-slate-400 font-medium mt-4 pt-4 border-t border-slate-100">
+              Written from live tickets, room status and guest conversations.
             </p>
           </div>
         </div>
@@ -626,39 +654,39 @@ export const MaintenanceDashboard = () => {
                   const isHigh = t.isHigh;
                   const isNormal = t.isNormal;
                   
-                  let priorityClass = 'bg-slate-100 text-slate-600 border-slate-200';
-                  if (isUrgent) priorityClass = 'bg-red-50 text-red-700 border-red-200';
-                  else if (isHigh) priorityClass = 'bg-orange-50 text-orange-700 border-orange-200';
-
                   return (
                     <div key={t.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                       {/* Tags */}
                       <div className="flex justify-between items-start">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-mono text-slate-400 font-bold">{t.mtId}</span>
-                          <span className="text-[11px] font-bold text-slate-900 border-b border-slate-900 pb-0.5 leading-none">Room {t.room || 'N/A'}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${priorityClass}`}>
+                          <span className="text-[10px] font-mono text-slate-400 font-bold tracking-wider">{t.mtId}</span>
+                          <span className="text-[11px] font-bold text-slate-900 border-b-2 border-slate-900 pb-0.5 leading-none">Room {t.room || 'N/A'}</span>
+                          
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 ${isUrgent ? 'bg-[#FFF8F8] text-red-600 border-red-100' : isHigh ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                            <span className={`w-1 h-1 rounded-full ${isUrgent ? 'bg-red-500' : isHigh ? 'bg-orange-500' : 'bg-slate-400'}`}></span>
                             {isUrgent ? 'Urgent' : isHigh ? 'High' : isNormal ? 'Normal' : 'Low'}
                           </span>
                           
                           {t.status === 'In Progress' && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-amber-50 text-amber-700 border-amber-200">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-amber-50 text-amber-600 border-amber-100 flex items-center gap-1.5">
+                              <span className="w-1 h-1 rounded-full bg-amber-500"></span>
                               In Progress
                             </span>
                           )}
                           {t.status === 'Waiting Parts' && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-amber-50 text-amber-700 border-amber-200">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-amber-50 text-amber-600 border-amber-100 flex items-center gap-1.5">
+                              <span className="w-1 h-1 rounded-full bg-amber-500"></span>
                               Waiting Parts
                             </span>
                           )}
                           {t.status === 'New' && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-blue-50 text-blue-600 border-blue-100 flex items-center gap-1.5">
                               Open
                             </span>
                           )}
                           
                           {t.isOutOfService && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-red-50 text-red-700 border-red-200 flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border bg-[#FFF8F8] text-red-600 border-red-100 flex items-center gap-1">
                               <Wrench size={8} /> Out of service
                             </span>
                           )}
@@ -668,70 +696,74 @@ export const MaintenanceDashboard = () => {
 
                       {/* Title & Desc */}
                       <div className="space-y-1">
-                        <h4 className="text-lg font-bold text-slate-900 leading-tight">{t.what}</h4>
+                        <h4 className="text-[17px] font-bold text-slate-900 leading-tight">{t.what}</h4>
                         {t.detail && <p className="text-[13px] text-slate-500">{t.detail}</p>}
                       </div>
 
                       {/* Timeline */}
                       {t.logs && t.logs.length > 0 && (
-                        <div className="space-y-2.5 pt-2">
+                        <div className="space-y-3 pt-3">
                           {t.logs.map((log) => (
-                            <div key={log.id} className="flex items-start gap-3 text-xs text-slate-600">
-                              <span className="font-mono text-[10px] text-slate-400 w-12 pt-0.5">
+                            <div key={log.id} className="flex items-start gap-3 text-[11px] text-slate-600">
+                              <span className="font-mono text-[10px] text-slate-400 w-10 pt-0.5">
                                 {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                               {log.icon === 'whatsapp' ? (
-                                <div className="w-4 h-4 rounded border border-emerald-500 shrink-0 flex items-center justify-center mt-0.5">
-                                  <span className="text-emerald-500 text-[10px]">💬</span>
+                                <div className="w-[18px] h-[18px] rounded-full border border-emerald-500 shrink-0 flex items-center justify-center mt-0.5 bg-emerald-50">
+                                  <span className="text-emerald-500 text-[9px]">💬</span>
                                 </div>
                               ) : (
-                                <div className="w-4 h-4 rounded-full border-2 border-slate-200 shrink-0 mt-0.5" />
+                                <div className="w-[18px] h-[18px] rounded-full border border-slate-200 shrink-0 flex items-center justify-center mt-0.5 bg-slate-50">
+                                </div>
                               )}
-                              <p className="flex-1">{log.message}</p>
+                              <p className="flex-1 pt-0.5">
+                                {log.message}
+                              </p>
                             </div>
                           ))}
                         </div>
                       )}
 
                       {/* Buttons */}
-                      <div className="flex items-center gap-2 pt-3 border-t border-slate-100 mt-4 flex-wrap">
+                      <div className="flex items-center gap-2 pt-4 border-t border-slate-100 mt-4 flex-wrap">
                         {t.status === 'New' && (
                           <button 
                             onClick={() => handleStartWork(t.id)}
-                            className="px-4 py-1.5 bg-[#105F39] text-white hover:bg-[#0b4227] rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                            className="px-5 py-2 bg-[#105F39] text-white hover:bg-[#0b4227] rounded-full text-[11px] font-bold transition-colors cursor-pointer"
                           >
                             Accept
                           </button>
                         )}
                         {t.status === 'In Progress' && (
                           <button 
-                            className="px-4 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                            className="px-5 py-2 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer"
                           >
                             Update
                           </button>
                         )}
-                        {t.status !== 'Waiting Parts' && (
-                          <button 
-                            onClick={() => handlePartsRequired(t.id)}
-                            className="px-4 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                          >
-                            Parts required
-                          </button>
-                        )}
+                        <button 
+                          onClick={() => handlePartsRequired(t.id)}
+                          className="px-5 py-2 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer"
+                        >
+                          Parts required
+                        </button>
                         <button 
                           onClick={() => handleCompleteWork(t.id)}
-                          className="px-4 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          className="px-5 py-2 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-full text-[11px] font-bold transition-colors cursor-pointer"
                         >
                           Complete
                         </button>
-                        <button className="px-4 py-1.5 text-slate-500 hover:text-slate-800 text-xs font-bold transition-colors flex items-center gap-1 ml-auto cursor-pointer">
+                        <button className="px-3 py-2 text-slate-500 hover:text-slate-800 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer">
                           <ArrowUpRight size={12} /> Escalate
                         </button>
                         
                         {t.sendTo && t.sendTo !== 'Leave unassigned' && (
-                          <div className="flex items-center gap-1.5 ml-2">
-                            <span className="text-slate-500 mr-1"><AlertTriangle size={12} /></span>
-                            <span className="px-3 py-1 border border-slate-200 rounded-lg text-[10px] font-bold bg-slate-50">{t.sendTo}</span>
+                          <div className="flex items-center gap-1 ml-auto">
+                            <span className="text-amber-500 mr-1"><AlertTriangle size={12} /></span>
+                            <div className="flex bg-slate-100 rounded-full p-0.5">
+                                <span className="px-3 py-1 bg-white rounded-full text-[10px] font-bold shadow-sm">{t.sendTo.split(' ')[0]}</span>
+                                {t.sendTo.split(' ')[1] && <span className="px-3 py-1 text-slate-500 text-[10px] font-bold">{t.sendTo.split(' ')[1]}</span>}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -804,7 +836,7 @@ export const MaintenanceDashboard = () => {
           </div>
 
           {/* RIGHT SIDE: WhatsApp Operations Layer */}
-          <div className="hidden lg:flex w-[350px] xl:w-[400px] bg-white rounded-2xl border border-slate-200 shadow-sm shrink-0 flex-col overflow-hidden">
+          <div className="flex w-full lg:w-[350px] xl:w-[400px] bg-white rounded-2xl border border-slate-200 shadow-sm shrink-0 flex-col overflow-hidden mt-8 lg:mt-0">
             <div className="p-6 pb-4 border-b border-slate-100">
               <div className="space-y-1.5 mb-6">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">WHATSAPP OPERATIONS LAYER</span>
@@ -831,83 +863,67 @@ export const MaintenanceDashboard = () => {
             </div>
 
             {/* Phone Mockup UI */}
-            <div className="flex-1 bg-[#F0F2F5] relative flex flex-col min-h-[500px]">
-              {/* WhatsApp Header */}
-              <div className="bg-[#008069] text-white px-4 py-3 flex items-center gap-3 shrink-0">
-                <button className="flex items-center gap-1 text-white/90 hover:text-white cursor-pointer">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold font-mono">HC</span>
-                  </div>
-                </button>
-                <div className="flex-1">
-                  <h3 className="font-bold text-sm leading-tight">Hotelogx Connect</h3>
-                  <p className="text-[10px] text-white/80">business account</p>
-                </div>
-                <div className="flex items-center gap-4 text-white">
-                  <Phone size={16} className="fill-current" />
-                  <MoreVertical size={18} />
-                </div>
-              </div>
-
+            <div className="flex-1 bg-white relative flex flex-col min-h-[500px]">
               {/* Chat Area */}
-              <div className="flex-1 p-4 bg-[#EFEAE2] flex flex-col gap-3 relative overflow-y-auto" style={{backgroundImage: 'url("https://w0.peakpx.com/wallpaper/818/148/HD-wallpaper-whatsapp-background-cool-dark-green-light-pattern-soft-texture.jpg")', backgroundSize: 'cover', backgroundBlendMode: 'overlay', backgroundColor: 'rgba(239, 234, 226, 0.95)'}}>
+              <div className="flex-1 p-4 bg-[#F8F9FA] flex flex-col relative overflow-y-auto">
                 
-                <div className="text-center">
-                  <span className="bg-[#E1F3FB] text-[#4F6C7A] text-[10px] font-bold px-3 py-1 rounded-xl shadow-sm inline-block select-none">Today</span>
+                {/* Contact Card */}
+                <div className="bg-[#F0F2F5] rounded-xl p-3 flex justify-between items-center border border-slate-200 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#E2E8F0] rounded-full flex items-center justify-center text-[#0F5C6E]">
+                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    </div>
+                    <div>
+                      <h4 className="text-[13px] font-bold text-slate-900 leading-tight">Peter Janssens</h4>
+                      <p className="text-[11px] text-slate-500">+32 494 31 62 18 · Technical Manager</p>
+                    </div>
+                  </div>
+                  <Phone size={16} className="text-slate-400" />
                 </div>
 
                 {previewTask ? (
-                  <>
+                  <div className="space-y-1">
                     {/* Bot Message Dynamic */}
-                    <div className="bg-white rounded-xl rounded-tl-sm p-2.5 pb-1 max-w-[85%] shadow-sm relative">
-                      <div className="absolute top-0 -left-2 w-0 h-0 border-t-[8px] border-t-white border-l-[8px] border-l-transparent border-b-[8px] border-b-transparent"></div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm relative max-w-full">
                       <div className="text-[11px] font-bold text-[#008069] mb-1">Hotelogx Connect</div>
-                      <div className="text-[13px] text-slate-800 space-y-2 leading-snug">
-                        <p className="font-bold">New Maintenance Request</p>
-                        <p>Room {previewTask.room || 'N/A'}<br/>Issue: {previewTask.what}<br/>Priority: {previewTask.priority}<br/>Reported by: System</p>
+                      <div className="text-[13px] text-slate-800 space-y-1 leading-snug">
+                        <p className="mb-3">New Maintenance Request</p>
+                        <p>Room: {previewTask.room || '302'}</p>
+                        <p>Issue: {previewTask.what || 'Air conditioning not cooling'}</p>
+                        <p>Priority: {previewTask.priority || 'High'}</p>
+                        <p>Reported by: Guest via WhatsApp</p>
                       </div>
                       <div className="text-right mt-1">
-                        <span className="text-[9px] text-slate-400 select-none">
+                        <span className="text-[10px] text-slate-400 select-none">
                           {new Date(previewTask.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
 
                     {/* Interactive WhatsApp Buttons */}
-                    <div className="bg-white rounded-xl shadow-sm p-1 max-w-[85%] divide-y divide-slate-100 font-bold text-[#00A884]">
+                    <div className="bg-white rounded-xl shadow-sm divide-y divide-slate-100 font-medium">
                       <button 
                         onClick={() => handleStartWork(previewTask.id)}
-                        className="w-full py-2.5 text-[13px] text-center hover:bg-slate-50 transition-colors cursor-pointer"
+                        className="w-full py-3 text-[14px] text-center hover:bg-slate-50 transition-colors cursor-pointer text-[#82CBEB]"
                       >
                         Accept
                       </button>
-                      <button className="w-full py-2.5 text-[13px] text-center hover:bg-slate-50 transition-colors cursor-pointer text-red-500">
+                      <button className="w-full py-3 text-[14px] text-center hover:bg-slate-50 transition-colors cursor-pointer text-[#82CBEB]">
                         Unable to Handle
                       </button>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center">
                      <p className="text-xs text-slate-500 italic bg-white/50 px-3 py-1 rounded-full">No active tasks to preview.</p>
                   </div>
                 )}
+                
+                <p className="text-[10.5px] text-slate-400 mt-6 leading-relaxed">
+                  Interactive buttons, lists and Flows are sent from your WhatsApp Business number. Staff never open the dashboard to update a room.
+                </p>
 
               </div>
-
-              {/* Input Area */}
-              <div className="bg-[#F0F2F5] p-2 flex items-end gap-2 shrink-0">
-                <div className="bg-white rounded-full flex-1 flex items-center gap-2 px-4 py-2 shadow-sm min-h-[40px]">
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
-                  <input type="text" placeholder="Message" className="flex-1 bg-transparent border-none focus:outline-none text-sm text-slate-700" />
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer"><Paperclip size={18} /></button>
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer"><Camera size={18} /></button>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-[#00A884] flex items-center justify-center text-white shrink-0 shadow-sm cursor-pointer hover:bg-[#008f6f] transition-colors">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>

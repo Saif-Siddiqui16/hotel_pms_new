@@ -555,7 +555,7 @@ const TakeoverQueue = () => {
       `}</style>
 
       {/* Main Header Row */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col items-start gap-4">
         <div className="space-y-1.5 text-left">
           <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono font-sans block">TASKS</span>
           <h2 className="text-2xl font-bold text-slate-955 tracking-tight font-serif">One list across every department</h2>
@@ -583,7 +583,7 @@ const TakeoverQueue = () => {
       </div>
 
       {/* KPI Stats Cards (4 items) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
         
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-left relative min-h-[105px] flex flex-col justify-between">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none animate-all">Open</span>
@@ -620,7 +620,7 @@ const TakeoverQueue = () => {
       </div>
 
       {/* Filter Row 1: Departments */}
-      <div className="flex flex-wrap gap-2 font-sans text-xs">
+      <div className="flex overflow-x-auto hide-scrollbar gap-2 font-sans text-xs pb-2 whitespace-nowrap">
         <button 
           onClick={() => setDeptFilter('all')}
           className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
@@ -690,7 +690,7 @@ const TakeoverQueue = () => {
 
       <div className="p-8 max-w-7xl mx-auto space-y-6">
         {/* Filters Second Row: Statuses */}
-        <div className="flex items-center gap-6 text-[11px] text-slate-500 font-sans border-b border-[#E7E4DD]">
+        <div className="flex overflow-x-auto hide-scrollbar items-center gap-6 text-[11px] text-slate-500 font-sans border-b border-[#E7E4DD] pb-2 whitespace-nowrap">
           <button 
             onClick={() => setStatusFilter('all')}
             className={`font-bold transition-all cursor-pointer ${statusFilter === 'all' ? 'text-slate-900 border-b-2 border-slate-900 pb-1 -mb-3.5' : 'hover:text-slate-700'}`}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Menu, Bell, ChevronDown, User, LogOut, ArrowLeft, Hotel, Search,
+  Menu, Bell, ChevronDown, ChevronRight, User, LogOut, ArrowLeft, Hotel, Search,
   BedDouble, Clock, Settings, Users, Sparkles, Building2, Wrench, LayoutDashboard, CreditCard
 } from 'lucide-react';
 import { useApp, ROLES } from '../../context/AppContext';
@@ -120,7 +120,7 @@ export const Navbar = () => {
       <header className="sticky top-0 z-30 bg-white text-slate-900 border-b border-slate-200 shadow-sm">
         {/* Tier 1: Brand & User Header */}
         <div className="h-14 px-4 sm:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <button 
               onClick={toggleSidebar}
               className="lg:hidden p-1.5 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"
@@ -128,32 +128,26 @@ export const Navbar = () => {
             >
               <Menu size={20} />
             </button>
-            <div className="flex items-center gap-4 pr-6 border-r border-slate-200 hidden sm:flex h-8">
-              <div className="flex flex-col text-left justify-center">
-                <span className="font-serif text-[20px] font-medium leading-none text-slate-900 tracking-tight">Hotelogx</span>
-                <span className="text-[7.5px] font-bold text-slate-400 tracking-[0.2em] uppercase mt-1">Connect</span>
-              </div>
-            </div>
           </div>
 
-          <div className="flex-1 px-6 hidden md:flex flex-col">
+          <div className="flex-1 px-2 flex flex-col ml-1 sm:ml-0">
             <div className="flex items-baseline gap-2">
-              <h2 className="font-bold text-slate-900 text-[13px]">{currentHotel?.name || 'Hotel Mercier'}</h2>
-              <span className="text-slate-400 text-[11px]">{currentHotel?.location || 'Antwerp'} • {currentHotel?.rooms || 48} rooms</span>
+              <h2 className="font-bold text-slate-800 text-[15px]">{currentHotel?.name || 'Hotel Mercier'}</h2>
+              <span className="hidden md:inline text-slate-400 text-[13px]">{currentHotel?.location || 'Antwerp'} · {currentHotel?.rooms || 48} rooms</span>
             </div>
-            <p className="text-slate-400 text-[11px] mt-0.5">
+            <p className="text-slate-400 text-[13px]">
               {location.pathname.includes('maintenance') || role === ROLES.MAINTENANCE_MANAGER || role === ROLES.MAINTENANCE_STAFF 
-                ? 'Maintenance tasks' 
+                ? 'Maintenance' 
                 : location.pathname.includes('housekeeping') || role === ROLES.HOUSEKEEPING_MANAGER || role === ROLES.HOUSEKEEPING_STAFF 
-                ? 'Housekeeping floor plans' 
+                ? 'Housekeeping — the floor at a glance' 
                 : 'Front office — your shift, prepared'}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 relative">
-            <div className="hidden sm:flex items-center px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full">
-              <span className="text-[11px] font-semibold text-emerald-700">
-                {getRoleLabel(role)}
+          <div className="flex items-center gap-2 sm:gap-3 relative shrink-0">
+            <div className="flex items-center px-2 sm:px-3 py-1 bg-[#F0F5F4] border border-[#C5DFD9] rounded-full">
+              <span className="text-[12px] font-medium text-[#005A70]">
+                {location.pathname.includes('maintenance') || role === ROLES.MAINTENANCE_MANAGER || role === ROLES.MAINTENANCE_STAFF ? 'Maintenance / Technical' : location.pathname.includes('housekeeping') || role === ROLES.HOUSEKEEPING_MANAGER || role === ROLES.HOUSEKEEPING_STAFF ? 'Housekeeping' : getRoleLabel(role)}
               </span>
             </div>
 
@@ -164,9 +158,7 @@ export const Navbar = () => {
                 className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative cursor-pointer border border-slate-200"
               >
                 <Bell size={16} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white text-[8px] font-bold text-white flex items-center justify-center">{unreadCount}</span>
-                )}
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#AC473B] rounded-full border-[1.5px] border-white text-[9px] font-bold text-white flex items-center justify-center">2</span>
               </button>
 
               {showNotifications && (
@@ -275,11 +267,11 @@ export const Navbar = () => {
                 onClick={() => setShowLogoutConfirm(true)}
                 className="flex items-center gap-2 py-1 pl-1 pr-3 rounded-full hover:bg-slate-50 border border-slate-200 transition-colors cursor-pointer bg-white"
               >
-                <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 text-[10px] font-bold font-mono">
-                  {userInitials}
+                <div className="w-7 h-7 rounded-full bg-[#E8F2F0] flex items-center justify-center text-[#005A70] text-[10px] font-bold font-mono border border-[#C5DFD9]">
+                  PJ
                 </div>
-                <span className="hidden sm:block text-[13px] font-medium text-slate-700">{userName}</span>
-                <LogOut size={13} className="text-slate-400 ml-1" />
+                <span className="hidden sm:block text-[14px] font-medium text-[#005A70]">Peter</span>
+                <LogOut size={14} className="text-slate-400 ml-1" />
               </button>
             </div>
           </div>

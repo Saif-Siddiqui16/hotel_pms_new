@@ -12,11 +12,17 @@ import {
   Database,
   Sliders,
   ShieldCheck,
+  Users,
+  Building2,
+  Link,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useApp, ROLES } from "../context/AppContext";
 import { API_BASE_URL } from "../config";
+import UsersManagement from "./UsersManagement";
+import SubscriptionBilling from "./SubscriptionBilling";
 
 // --- SUB-PANEL: AI TONE & STYLE ---
 const AIToneStylePanel = ({ settings, onChange }) => {
@@ -879,11 +885,152 @@ const BillingPlanPanel = () => {
   );
 };
 
+// --- SUB-PANEL: HOTEL PROFILE ---
+const HotelProfilePanel = ({ settings, onChange }) => {
+  return (
+    <div className="space-y-6 text-left">
+      {/* Property identity */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">Property identity</h3>
+            <p className="text-slate-500 text-xs font-medium mt-0.5">What the AI calls your hotel, and what appears on invoices</p>
+          </div>
+          <button className="px-4 py-1.5 bg-[#8DAA9E] text-white rounded font-bold text-xs flex items-center gap-1.5 opacity-80 cursor-default">
+            <CheckCircle2 size={14} /> Saved
+          </button>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Trading name</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900" defaultValue="Hotel Mercier" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Legal entity</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900" defaultValue="Hotel Mercier BV" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Street</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900" defaultValue="Leopoldstraat 42" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Postcode</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="2000" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">City</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900" defaultValue="Antwerp" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Country</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900" defaultValue="Belgium" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">VAT number</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="BE 0784.512.339" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Timezone</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="Europe/Brussels" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Rooms</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900" defaultValue="48" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Rating</label>
+              <select className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900">
+                <option>4 stars</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact & channels */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100">
+          <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">Contact & channels</h3>
+          <p className="text-slate-500 text-xs font-medium mt-0.5">Where guests reach you, and where the AI sends them to book</p>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Reception phone</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="+32 3 227 41 00" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Reception mailbox</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="reception@hotelmercier.be" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Website</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="hotelmercier.be" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Booking engine</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="hotelmercier.be/book" />
+            </div>
+          </div>
+          <div className="flex gap-2 items-start text-[10px] text-slate-400 font-medium">
+            <ShieldCheck size={14} className="shrink-0 text-slate-400 mt-0.5" />
+            <p>Availability questions always end at your booking engine. The WhatsApp number is set in Connections, not here — it belongs to your WhatsApp Business account.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stay basics */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden mb-8">
+        <div className="p-5 border-b border-slate-100">
+          <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">Stay basics</h3>
+          <p className="text-slate-500 text-xs font-medium mt-0.5">The AI answers check-in and check-out questions from these times</p>
+        </div>
+        <div className="p-5 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Check-in from</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="15:00" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 tracking-wide">Check-out by</label>
+              <input type="text" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-mono" defaultValue="11:00" />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-500 tracking-wide">Languages the AI replies in</label>
+            <div className="flex flex-wrap gap-2">
+              {['Dutch', 'French', 'English', 'German'].map(lang => (
+                <span key={lang} className="px-3 py-1 rounded-full border border-slate-900 text-xs font-semibold text-slate-900 bg-white">
+                  {lang}
+                </span>
+              ))}
+              {['Spanish', 'Italian', 'Portuguese', 'Polish'].map(lang => (
+                <span key={lang} className="px-3 py-1 rounded-full border border-slate-200 text-xs font-medium text-slate-400 bg-slate-50">
+                  {lang}
+                </span>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium mt-1.5">The AI answers in the language the guest wrote in. These are the ones your team can proofread.</p>
+          </div>
+
+          <div className="space-y-1.5 pt-2">
+            <label className="text-[10px] font-bold text-slate-500 tracking-wide">How the AI describes the hotel</label>
+            <textarea className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 min-h-[80px]" defaultValue="A 48-room townhouse hotel in the fashion district, five minutes from Antwerp Central. Courtyard-facing Deluxe rooms, a small spa and a breakfast room that opens at 07:00."></textarea>
+            <p className="text-[10px] text-slate-400 font-medium">Used for pre-arrival enquiries alongside your knowledge base.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- MAIN SETTINGS EXPORT COMPONENT ---
 const Settings = () => {
   const { addToast, role } = useApp();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("tone");
+  const [activeTab, setActiveTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -1180,43 +1327,480 @@ const WhatsAppEmailDetailsPanel = ({ settings, onChange }) => {
   );
 };
 
+// --- SUB-PANEL: INTEGRATIONS (WhatsApp, Email, Mews) ---
+const IntegrationsPanel = () => {
+  const waWebhookUrl = `${API_BASE_URL}/api/webhooks/whatsapp`;
+  const emailWebhookUrl = `${API_BASE_URL}/api/webhooks/email`;
+  const mewsWebhookUrl = `${API_BASE_URL}/api/webhooks/mews`;
+
+  const [hotel, setHotel] = useState(null);
+  const [activeModal, setActiveModal] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [emailForm, setEmailForm] = useState({
+    smtpHost: '', smtpPort: 587, smtpUser: '', smtpPass: '',
+    imapHost: '', imapPort: 993, imapUser: '', imapPass: ''
+  });
+  const [waForm, setWaForm] = useState({
+    whatsappPhoneId: '', whatsappApiKey: '', whatsappAppSecret: '', whatsappVerifyToken: ''
+  });
+  const [mewsForm, setMewsForm] = useState({
+    pmsBaseUrl: '', pmsApiKey: '', pmsSecret: ''
+  });
+
+  const triggerToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/hotels/settings`, {
+      headers: { 'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const h = data.data;
+          setHotel(h);
+          setEmailForm({
+            smtpHost: h.smtpHost || '',
+            smtpPort: h.smtpPort || 587,
+            smtpUser: h.smtpUser || h.hotelEmail || '',
+            smtpPass: '',
+            imapHost: h.imapHost || '',
+            imapPort: h.imapPort || 993,
+            imapUser: h.smtpUser || h.hotelEmail || '',
+            imapPass: ''
+          });
+          setWaForm({
+            whatsappPhoneId: h.whatsappPhoneId || '',
+            whatsappApiKey: '',
+            whatsappAppSecret: '',
+            whatsappVerifyToken: h.whatsappVerifyToken || ''
+          });
+          setMewsForm({
+            pmsBaseUrl: h.pmsBaseUrl || 'https://api.mews-demo.com/api/connector/v1',
+            pmsApiKey: h.pmsApiKey || '',
+            pmsSecret: ''
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveEmail = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const hotelId = hotel?.id;
+      if (!hotelId) throw new Error('Hotel not loaded');
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/${hotelId}/imap-smtp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
+        },
+        body: JSON.stringify({
+          mailboxEmail: emailForm.smtpUser,
+          imapHost: emailForm.imapHost,
+          imapPort: Number(emailForm.imapPort),
+          imapSecure: Number(emailForm.imapPort) === 993,
+          smtpHost: emailForm.smtpHost,
+          smtpPort: Number(emailForm.smtpPort),
+          smtpSecure: Number(emailForm.smtpPort) === 465,
+          smtpUser: emailForm.smtpUser,
+          smtpPass: emailForm.smtpPass || undefined
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Save failed');
+      triggerToast('Email connection settings saved successfully!', 'success');
+      setActiveModal(null);
+    } catch (err) {
+      triggerToast(err.message || 'Failed to save', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveWhatsApp = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/hotels/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
+        },
+        body: JSON.stringify({
+          whatsappPhoneId: waForm.whatsappPhoneId,
+          whatsappApiKey: waForm.whatsappApiKey || undefined,
+          whatsappAppSecret: waForm.whatsappAppSecret || undefined,
+          whatsappVerifyToken: waForm.whatsappVerifyToken,
+          whatsappConnected: true
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Save failed');
+      triggerToast('WhatsApp credentials saved successfully!', 'success');
+      setActiveModal(null);
+    } catch (err) {
+      triggerToast(err.message || 'Failed to save', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveMews = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/hotels/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('autopilot_token')}`
+        },
+        body: JSON.stringify({
+          pmsBaseUrl: mewsForm.pmsBaseUrl,
+          pmsApiKey: mewsForm.pmsApiKey || undefined,
+          pmsSecret: mewsForm.pmsSecret || undefined,
+          pmsConnected: true
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Save failed');
+      triggerToast('Mews PMS credentials saved successfully!', 'success');
+      setActiveModal(null);
+    } catch (err) {
+      triggerToast(err.message || 'Failed to save', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const CopyInput = ({ label, value }) => (
+    <div className="space-y-1">
+      <p className="text-[9px] font-black uppercase tracking-widest text-[#7C3AED] font-mono">{label}</p>
+      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+        <input readOnly value={value} className="flex-1 bg-transparent text-[11px] text-slate-600 font-mono outline-none truncate" />
+        <button type="button" onClick={() => { navigator.clipboard?.writeText(value); triggerToast('Copied!'); }} title="Copy" className="shrink-0 text-slate-400 hover:text-[#7C3AED] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        </button>
+      </div>
+    </div>
+  );
+
+  const FieldInput = ({ label, fkey, type = 'text', placeholder }) => (
+    <div className="space-y-1">
+      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">{label}</label>
+      <input
+        type={type}
+        value={emailForm[fkey] ?? ''}
+        onChange={e => setEmailForm(prev => ({ ...prev, [fkey]: e.target.value }))}
+        placeholder={placeholder || ''}
+        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition"
+      />
+    </div>
+  );
+
+  const waActive = hotel?.whatsappConnected ?? true;
+  const emailActive = hotel?.emailConnected ?? true;
+  const mewsActive = hotel?.pmsConnected ?? true;
+  const waAlert = hotel?.whatsappHealthStatus === 'expired' || hotel?.whatsappHealthStatus === 'invalid';
+
+  const Card = ({ icon, tag, title, healthLabel, healthValue, handshakeOk, webhookLabel, webhookUrl, alertMsg, isActive, onConfigure }) => (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+      <div className="p-5 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 bg-slate-100">{icon}</div>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">{tag}</p>
+            <h3 className="text-sm font-bold text-slate-900 leading-tight">{title}</h3>
+          </div>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider font-mono shrink-0 border ${isActive ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>{isActive ? 'ACTIVE' : 'INACTIVE'}</span>
+      </div>
+      <div className="px-5 pb-3 space-y-1.5">
+        <div className="flex justify-between text-xs">
+          <span className="text-slate-500 font-medium">{healthLabel}</span>
+          <span className="font-bold text-slate-800">{healthValue}</span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-slate-500 font-medium">Connection Handshake:</span>
+          <span className={`font-bold ${handshakeOk ? 'text-emerald-600' : 'text-red-500'}`}>{handshakeOk ? '✓ Registered' : '✗ Not Registered'}</span>
+        </div>
+      </div>
+      <div className="px-5 pb-4 space-y-1">
+        <p className="text-[9px] font-black uppercase tracking-widest text-[#7C3AED] font-mono">{webhookLabel}</p>
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+          <input readOnly value={webhookUrl} className="flex-1 bg-transparent text-[11px] text-slate-600 font-mono outline-none truncate" />
+          <button type="button" onClick={() => { navigator.clipboard?.writeText(webhookUrl); triggerToast('Copied!'); }} className="shrink-0 text-slate-400 hover:text-[#7C3AED] transition-colors" title="Copy">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          </button>
+        </div>
+      </div>
+      {alertMsg && (
+        <div className="mx-5 mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+          <span className="text-base shrink-0">🔑</span>
+          <div>
+            <p className="text-[10px] font-black text-red-700 uppercase tracking-wider mb-0.5">ACCESS TOKEN EXPIRED / INVALID</p>
+            <p className="text-[10px] text-red-600 leading-relaxed">{alertMsg}</p>
+          </div>
+        </div>
+      )}
+      <div className="flex-1" />
+      <div className="flex border-t border-slate-100">
+        <button type="button" onClick={onConfigure} className="flex-1 py-3 text-[10px] font-black text-white bg-slate-900 hover:bg-slate-800 transition-colors uppercase tracking-wider">CONFIGURE</button>
+        <button type="button" onClick={onConfigure} className="flex-1 py-3 text-[10px] font-black text-slate-700 border-l border-slate-100 hover:bg-slate-50 transition-colors uppercase tracking-wider">RECONNECT</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[200] px-5 py-3 rounded-xl text-xs font-bold shadow-xl text-white ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-base font-bold text-slate-900">Integrations &amp; Channels</h2>
+        <p className="text-xs text-slate-500 font-medium mt-0.5">Live connection status. Paste webhook URLs directly into each platform's dashboard.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <Card
+          icon="💬"
+          tag="Official Meta Channel"
+          title="WhatsApp Business API"
+          healthLabel="Outbound Health Rate:"
+          healthValue={hotel?.whatsappConnected ? "99.8% Healthy" : "Offline"}
+          handshakeOk={waActive}
+          webhookLabel="Webhook Endpoint"
+          webhookUrl={waWebhookUrl}
+          alertMsg={waAlert ? "Access Token is expired or invalid. Please generate a new token from Meta Developer Console → WhatsApp → API Setup." : null}
+          isActive={waActive}
+          onConfigure={() => setActiveModal('whatsapp')}
+        />
+        <Card
+          icon="✉️"
+          tag="SMTP Server Queue"
+          title="SMTP Email Reservation Gateway"
+          healthLabel="Outbound Health Rate:"
+          healthValue={hotel?.emailConnected ? "100% Inbox Ready" : "Offline"}
+          handshakeOk={emailActive}
+          webhookLabel="Email Webhook Endpoint (Forward Target)"
+          webhookUrl={emailWebhookUrl}
+          alertMsg={null}
+          isActive={emailActive}
+          onConfigure={() => setActiveModal('email')}
+        />
+        <Card
+          icon="🏨"
+          tag="PMS Integration"
+          title="Mews PMS"
+          healthLabel="Sync Health:"
+          healthValue={hotel?.pmsConnected ? "100% Synced" : "Not Connected"}
+          handshakeOk={mewsActive}
+          webhookLabel="Mews Webhook Endpoint"
+          webhookUrl={mewsWebhookUrl}
+          alertMsg={null}
+          isActive={mewsActive}
+          onConfigure={() => setActiveModal('mews')}
+        />
+      </div>
+
+      {/* MODAL */}
+      {activeModal && (
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setActiveModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+
+            {activeModal === 'whatsapp' && (
+              <form onSubmit={handleSaveWhatsApp} className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">AUTHORIZATION SETTINGS</p>
+                    <h3 className="text-base font-bold text-slate-900 mt-0.5">WhatsApp Business API Credentials</h3>
+                  </div>
+                  <button type="button" onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-700 p-1 text-lg">✕</button>
+                </div>
+
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-start gap-2">
+                  <span className="text-base shrink-0">🔒</span>
+                  <div>
+                    <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">OPERATOR SECURITY NOTICE</p>
+                    <p className="text-[10px] text-indigo-600 mt-0.5 leading-relaxed">Credentials are encrypted with AES-256 and stored securely. Access tokens are obfuscated from all dispatch layers.</p>
+                  </div>
+                </div>
+
+                {waAlert && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+                    <span>🔑</span>
+                    <div>
+                      <p className="text-[10px] font-black text-red-700 uppercase tracking-wider">Access Token Expired / Invalid</p>
+                      <p className="text-[10px] text-red-600 mt-0.5">Generate a new token from Meta Developer Console → WhatsApp → API Setup.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Meta Phone Number ID</label>
+                    <input type="text" value={waForm.whatsappPhoneId} onChange={e => setWaForm(p => ({ ...p, whatsappPhoneId: e.target.value }))} placeholder="e.g. 1049283749283" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Permanent Access Token</label>
+                    <input type="password" value={waForm.whatsappApiKey} onChange={e => setWaForm(p => ({ ...p, whatsappApiKey: e.target.value }))} placeholder="••••••••••••••••••••••" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Meta App Secret</label>
+                    <input type="password" value={waForm.whatsappAppSecret} onChange={e => setWaForm(p => ({ ...p, whatsappAppSecret: e.target.value }))} placeholder="••••••••••••••••••••••" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Webhook Verify Token</label>
+                    <input type="text" value={waForm.whatsappVerifyToken} onChange={e => setWaForm(p => ({ ...p, whatsappVerifyToken: e.target.value }))} placeholder="Custom verify token" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[#7C3AED] font-mono">Webhook Endpoint (paste into Meta Dashboard)</p>
+                  <CopyInput label="" value={waWebhookUrl} />
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase hover:bg-slate-50 transition">Cancel</button>
+                  <button type="submit" disabled={isSaving} className="flex-1 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider transition disabled:opacity-50">
+                    {isSaving ? 'SAVING...' : 'SAVE CONNECTION SETTINGS'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {activeModal === 'mews' && (
+              <form onSubmit={handleSaveMews} className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">AUTHORIZATION SETTINGS</p>
+                    <h3 className="text-base font-bold text-slate-900 mt-0.5">Mews PMS Connection Settings</h3>
+                  </div>
+                  <button type="button" onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-700 p-1 text-lg">✕</button>
+                </div>
+
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-start gap-2">
+                  <span className="text-base shrink-0">🔒</span>
+                  <div>
+                    <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">OPERATOR SECURITY NOTICE</p>
+                    <p className="text-[10px] text-indigo-600 mt-0.5 leading-relaxed">Credentials are encrypted with AES-256 and stored securely. API tokens are obfuscated from all dispatch layers.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Mews API Base URL</label>
+                    <input type="text" value={mewsForm.pmsBaseUrl} onChange={e => setMewsForm(p => ({ ...p, pmsBaseUrl: e.target.value }))} placeholder="https://api.mews.com/api/connector/v1" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Mews Client Token</label>
+                    <input type="password" value={mewsForm.pmsApiKey} onChange={e => setMewsForm(p => ({ ...p, pmsApiKey: e.target.value }))} placeholder="••••••••••••••••••••••" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono block">Mews Access Token</label>
+                    <input type="password" value={mewsForm.pmsSecret} onChange={e => setMewsForm(p => ({ ...p, pmsSecret: e.target.value }))} placeholder="••••••••••••••••••••••" className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#7C3AED] font-mono transition" />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[#7C3AED] font-mono">Webhook Endpoint (paste into Mews Commander)</p>
+                  <CopyInput label="" value={mewsWebhookUrl} />
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase hover:bg-slate-50 transition">Cancel</button>
+                  <button type="submit" disabled={isSaving} className="flex-1 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider transition disabled:opacity-50">
+                    {isSaving ? 'SAVING...' : 'SAVE CONNECTION SETTINGS'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+
+            {activeModal === 'email' && (
+              <form onSubmit={handleSaveEmail} className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">AUTHORIZATION SETTINGS</p>
+                    <h3 className="text-base font-bold text-slate-900 mt-0.5">SMTP Email Reservation Gateway Handshake Settings</h3>
+                  </div>
+                  <button type="button" onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-700 p-1 text-lg">✕</button>
+                </div>
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-start gap-2">
+                  <span className="text-base shrink-0">🔒</span>
+                  <div>
+                    <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">OPERATOR SECURITY NOTICE</p>
+                    <p className="text-[10px] text-indigo-600 mt-0.5 leading-relaxed">Security protocols authorize connections using dynamic AES-256 tokens. Private credentials are completely obfuscated from dispatch layers.</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <FieldInput label="SMTP Host" fkey="smtpHost" placeholder="smtp.titan.email" />
+                  <FieldInput label="SMTP Port" fkey="smtpPort" placeholder="587" />
+                  <FieldInput label="SMTP User" fkey="smtpUser" placeholder="info@yourdomain.com" />
+                  <FieldInput label="SMTP Password" fkey="smtpPass" type="password" placeholder="••••••••••••••••••••••" />
+                  <FieldInput label="IMAP Host" fkey="imapHost" placeholder="imap.titan.email" />
+                  <FieldInput label="IMAP Port" fkey="imapPort" placeholder="993" />
+                  <FieldInput label="IMAP User" fkey="imapUser" placeholder="info@yourdomain.com" />
+                  <FieldInput label="IMAP Password" fkey="imapPass" type="password" placeholder="••••••••••••••••••••••" />
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase hover:bg-slate-50 transition">Cancel</button>
+                  <button type="submit" disabled={isSaving} className="flex-1 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider transition disabled:opacity-50">
+                    {isSaving ? 'SAVING...' : 'SAVE CONNECTION SETTINGS'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+
+
   const allTabs = [
     {
+      id: "profile",
+      label: "Hotel Profile",
+      icon: Building2,
+    },
+    {
+      id: "users",
+      label: "Users & Roles",
+      icon: Users,
+    },
+    {
       id: "knowledge",
-      label: "Knowledge & Hotel Policies",
+      label: "Knowledge Base",
       icon: Database,
-      desc: "UPLOAD HOTEL RULES & DOCUMENTS",
     },
     {
-      id: "integrations",
-      label: "WhatsApp & Email Details",
-      icon: Bell,
-      desc: "AUTHORIZATION & CONNECTIONS",
+      id: "connections",
+      label: "Connections",
+      icon: Link,
     },
     {
-      id: "tone",
-      label: "AI Persona & Voice",
+      id: "ai_behaviour",
+      label: "AI Behaviour",
       icon: Bot,
-      desc: "VOICE STYLE & SIGNATURE",
     },
     {
-      id: "alerts",
-      label: "Staff Alerts & Escalation",
-      icon: ShieldAlert,
-      desc: "NOTIFICATIONS & SHIFT PAGING",
-    },
-    {
-      id: "account",
-      label: "Hotel Profile & Account",
-      icon: Lock,
-      desc: "EMAIL & SECURITY",
-    },
-    {
-      id: "systems",
-      label: "Advanced System Health",
-      icon: Sliders,
-      desc: "TECHNICAL MONITORING",
-      superAdminOnly: true,
+      id: "subscription",
+      label: "Subscription & Billing",
+      icon: CreditCard,
     },
   ];
 
@@ -1224,154 +1808,76 @@ const WhatsAppEmailDetailsPanel = ({ settings, onChange }) => {
 
   const renderContent = (tabId) => {
     switch (tabId) {
+      case "profile":
+        return <HotelProfilePanel settings={settings} onChange={handleChange} />;
+      case "users":
+        return <UsersManagement />;
       case "knowledge":
         return <KnowledgePolicyPanel settings={settings} onChange={handleChange} />;
-      case "integrations":
-        return <WhatsAppEmailDetailsPanel settings={settings} onChange={handleChange} />;
-      case "tone":
-        return <AIToneStylePanel settings={settings} onChange={handleChange} />;
-      case "alerts":
-        return <StaffAlertsPanel settings={settings} onChange={handleChange} />;
-      case "systems":
-        return <ConnectedSystemsPanel />;
-      case "account":
-        return <AccountSecurityPanel settings={settings} onChange={handleChange} />;
+      case "connections":
+        return <IntegrationsPanel />;
+      case "ai_behaviour":
+        return (
+          <div className="space-y-6">
+            <AIToneStylePanel settings={settings} onChange={handleChange} />
+            <StaffAlertsPanel settings={settings} onChange={handleChange} />
+          </div>
+        );
+      case "subscription":
+        return <SubscriptionBilling />;
       default:
-        return <KnowledgePolicyPanel settings={settings} onChange={handleChange} />;
+        return <HotelProfilePanel settings={settings} onChange={handleChange} />;
     }
   };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 gap-3 text-slate-400">
-        <RefreshCw size={28} className="animate-spin text-[#6D28D9]" />
+        <RefreshCw size={28} className="animate-spin text-[#105F39]" />
         <p className="text-xs font-semibold">Loading hotel configurations...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-5 animate-in fade-in duration-500 pb-20 relative text-left">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-3">
-        <div className="text-left space-y-0.5">
-          <h1 className="text-xl font-bold text-slate-950 tracking-tight">
-            Hotel Settings
-          </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Configure hotel preferences and AI behavior.
+    <div className="w-full flex-1 h-full overflow-y-auto bg-[#F7F6F3] text-left font-sans text-slate-900">
+      <div className="p-8 max-w-5xl mx-auto space-y-8">
+        
+        {/* HEADER SECTION */}
+        <div className="space-y-1 text-left">
+          <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono block">SETTINGS</span>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-tight" style={{fontFamily: 'Georgia, serif'}}>Hotel Mercier</h1>
+          <p className="text-sm text-slate-500 font-medium max-w-xl leading-relaxed">
+            Your property, your team, what the AI knows, what it is connected to, how much freedom it has and what you pay.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full lg:w-auto">
-          <button
-            onClick={handleApply}
-            disabled={isSaving}
-            className="w-full lg:w-auto flex items-center justify-center gap-1.5 px-4.5 py-2 bg-slate-900 hover:bg-slate-950 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm disabled:opacity-50 cursor-pointer border border-slate-800"
-          >
-            {isSaving ? (
-              <RefreshCw
-                size={11}
-                className="animate-spin text-purple-300 shrink-0"
-              />
-            ) : (
-              <Save size={11} className="shrink-0" />
-            )}
-            <span>
-              {isSaving ? "Applying Changes..." : "Save Behavior Settings"}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* BEHAVIOR SUMMARY STRIP */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold py-2 px-1 border-b border-slate-100/80 bg-white/10 rounded-lg text-slate-500 leading-normal">
-        <div className="flex items-start gap-2 text-left">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
-          <p>
-            <strong className="text-slate-900 font-bold block uppercase text-[9px] tracking-wider mb-0.5">
-              AI Autopilot Approvals
-            </strong>
-            Late checkout extensions • Spa massage bookings • Room view upgrades
-            • Guest WiFi/amenity inquiries
-          </p>
-        </div>
-        <div className="flex items-start gap-2 text-left">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1 shrink-0" />
-          <p>
-            <strong className="text-slate-900 font-bold block uppercase text-[9px] tracking-wider mb-0.5">
-              Staff Takeover Triggered
-            </strong>
-            High negativity sentiment • Surcharge refund disputes • Guest
-            service waivers above limit • Low model confidence
-          </p>
-        </div>
-      </div>
-
-      {/* GRID CONTAINER */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-        {/* DESKTOP SIDEBAR NAVIGATION */}
-        <div className="hidden md:block md:col-span-3 space-y-1">
-          <div className="space-y-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  if (tab.route) {
-                    navigate(tab.route);
-                    return;
-                  }
-                  setActiveTab(tab.id);
-                }}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left ${
-                  activeTab === tab.id
-                    ? "bg-[#6D28D9]/10 text-[#6D28D9] border border-[#6D28D9]/20"
-                    : "text-slate-500 hover:bg-white border border-transparent hover:border-slate-100 hover:text-slate-900"
-                }`}
-              >
-                <tab.icon size={14} className="shrink-0" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* AUTOMATION STATUS */}
-          <div className="pt-3">
-            <div className="p-4 bg-slate-900 rounded-xl text-white space-y-3 relative overflow-hidden group">
-              <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block border-b border-white/10 pb-1.5">
-                Automation Status
-              </span>
-
-              <div className="space-y-2 text-[10.5px] font-semibold text-slate-300">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>PMS Connected</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>WhatsApp Webhook Active</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>AI Engine Automation Running</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Escalation Takeover Online</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* HORIZONTAL TABS */}
+        <div className="flex overflow-x-auto hide-scrollbar gap-2 font-sans text-xs pb-2 border-b border-[#E7E4DD]">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 font-bold transition-all cursor-pointer whitespace-nowrap border-b-2 -mb-[9px] pb-3 ${
+                activeTab === tab.id
+                  ? "text-[#105F39] border-[#105F39]"
+                  : "text-slate-400 border-transparent hover:text-slate-600"
+              }`}
+            >
+              <tab.icon size={14} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
 
-        {/* DESKTOP CONTENT PANEL */}
-        <div className="hidden md:block md:col-span-9">
+        {/* CONTENT PANEL */}
+        <div>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.15 }}
             >
               {renderContent(activeTab)}
@@ -1379,62 +1885,6 @@ const WhatsAppEmailDetailsPanel = ({ settings, onChange }) => {
           </AnimatePresence>
         </div>
 
-        {/* MOBILE ACCORDION STACKED VIEW */}
-        <div className="block md:hidden md:col-span-12 space-y-2">
-          {tabs.map((tab) => {
-            const isOpen = mobileExpanded === tab.id;
-
-            return (
-              <div
-                key={tab.id}
-                className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm"
-              >
-                <button
-                  onClick={() => {
-                    if (tab.route) {
-                      navigate(tab.route);
-                      return;
-                    }
-                    setMobileExpanded(isOpen ? "" : tab.id);
-                  }}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50/50 text-xs font-bold text-slate-950 text-left border-b border-slate-100"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <tab.icon size={14} className="text-[#6D28D9]" />
-                    <span>{tab.label}</span>
-                  </div>
-                  <span className="text-slate-400 font-mono text-[10px]">
-                    {isOpen ? "▼" : "▶"}
-                  </span>
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden p-4 bg-white"
-                    >
-                      {renderContent(tab.id)}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-
-          {/* Mobile Sticky Save Button */}
-          <div className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-white/90 backdrop-blur-md border-t border-slate-150 block md:hidden">
-            <button
-              onClick={handleApply}
-              disabled={isSaving}
-              className="w-full py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-md disabled:opacity-50"
-            >
-              {isSaving ? "Applying Changes..." : "Save Settings"}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
